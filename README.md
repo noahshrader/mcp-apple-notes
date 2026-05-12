@@ -6,11 +6,13 @@ This is not a Claude-specific project. Claude Desktop is one possible consumer a
 
 ## Current Status
 
-Phase 0 is a minimal TypeScript workspace foundation. It intentionally does not implement Apple Notes access yet.
+Phase 1 has a reusable Apple Notes adapter MVP. It includes a JXA-backed script boundary, structured errors, timeout handling, search/read/create/append methods, dry-run support for writes, diagnostics, and unit tests.
+
+The MCP server, CLI commands, storage implementation, and portable skill runtime are still future phases.
 
 Current packages:
 
-- `@mcp-apple-notes/notes-adapter`: future reusable Apple Notes service boundary.
+- `@mcp-apple-notes/notes-adapter`: reusable Apple Notes service boundary.
 - `@mcp-apple-notes/mcp-server`: future MCP server boundary.
 - `@mcp-apple-notes/storage`: future local metadata and cache boundary.
 - `@mcp-apple-notes/cli`: future local command-line boundary.
@@ -24,6 +26,10 @@ npm test
 ```
 
 The project uses TypeScript, Node.js ESM, npm workspaces, and Node's built-in `node:test` runner.
+
+## Apple Notes Permissions
+
+Apple Notes access uses local macOS automation through `/usr/bin/osascript`. See [macOS Permissions](./docs/permissions.md) before running integration operations against Notes.
 
 ## Architecture
 
