@@ -1,0 +1,22 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo"
+  },
+  "references": [
+    {
+      "path": "../notes-adapter"
+    },
+    {
+      "path": "../storage"
+    }
+  ],
+  "include": [
+    "src/**/*.ts"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "name": "@mcp-apple-notes/mcp-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MCP server boundary for Apple Notes capabilities.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@mcp-apple-notes/notes-adapter": "0.1.0",
+    "@mcp-apple-notes/storage": "0.1.0"
+  }
+}

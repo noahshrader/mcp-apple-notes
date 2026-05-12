@@ -1,0 +1,12 @@
+node_modules/
+dist/
+*.tsbuildinfo
+
+.DS_Store
+.env
+.env.*
+
+# Runtime data belongs outside the repository by default, but keep this
+# guard in case a local storage path is pointed at the repo during testing.
+storage/*
+!storage/.gitkeep
