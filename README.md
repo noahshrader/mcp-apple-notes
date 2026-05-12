@@ -15,7 +15,7 @@ Current packages:
 - `@mcp-apple-notes/notes-adapter`: reusable Apple Notes service boundary.
 - `@mcp-apple-notes/mcp-server`: future MCP server boundary.
 - `@mcp-apple-notes/storage`: future local metadata and cache boundary.
-- `@mcp-apple-notes/cli`: future local command-line boundary.
+- `@mcp-apple-notes/cli`: local command-line boundary for diagnostics and manual adapter operations.
 
 ## Development
 
@@ -26,6 +26,30 @@ npm test
 ```
 
 The project uses TypeScript, Node.js ESM, npm workspaces, and Node's built-in `node:test` runner.
+
+## CLI
+
+After building, run the local CLI through npm:
+
+```sh
+npm run cli -- --help
+npm run cli -- diagnostics
+npm run cli -- search --query "project memory" --limit 5
+npm run cli -- read --id "<note-id>"
+npm run cli -- create-preview --title "Draft" --body "Body"
+npm run cli -- create --title "Draft" --body "Body"
+npm run cli -- append-preview --id "<note-id>" --content "New section"
+npm run cli -- append --id "<note-id>" --content "New section"
+```
+
+Add `--json` to any command for machine-readable output.
+
+Exit codes:
+
+- `0`: success.
+- `1`: adapter or Apple Notes operation failed.
+- `2`: CLI usage error.
+- `3`: unexpected CLI failure.
 
 ## Apple Notes Permissions
 
