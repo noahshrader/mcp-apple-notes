@@ -147,7 +147,7 @@ function findFolder(notes, folderName, accountName) {
 function searchNotes() {
   const notes = app();
   const query = input.query ? String(input.query).toLowerCase() : "";
-  const limit = Math.max(1, Math.min(Number(input.limit || 25), 100));
+  const limit = input.limit ? Math.max(1, Number(input.limit)) : Infinity;
   if (input.folder) {
     return searchFolderNotes(notes, query, limit);
   }

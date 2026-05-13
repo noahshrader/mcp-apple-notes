@@ -105,7 +105,7 @@ export type AppendNoteResult = {
 };
 
 export type NotesDiagnostics = {
-  platform: NodeJS.Platform;
+  platform: string;
   osascriptAvailable: boolean;
   notesReachable: boolean;
   automationPermission: "granted" | "denied" | "unknown";
