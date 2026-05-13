@@ -1,8 +1,23 @@
 {
   "name": "@mcp-apple-notes/cli",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "description": "Local command-line boundary for Apple Notes workflows.",
+  "license": "MIT",
+  "author": "Noah Shrader <noahshrader@gmail.com> (https://github.com/noahshrader)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/noahshrader/mcp-apple-notes.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/noahshrader/mcp-apple-notes#readme",
+  "keywords": [
+    "mcp",
+    "apple-notes",
+    "macos",
+    "automation",
+    "cli"
+  ],
   "type": "module",
   "bin": {
     "mcp-apple-notes": "./dist/index.js"

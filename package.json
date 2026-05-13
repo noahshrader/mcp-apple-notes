@@ -3,6 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "description": "Local-first Apple Notes intelligence system with reusable adapter, MCP tools, portable skills, and CLI workflows.",
+  "license": "MIT",
+  "author": "Noah Shrader <noahshrader@gmail.com> (https://github.com/noahshrader)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/noahshrader/mcp-apple-notes.git"
+  },
+  "homepage": "https://github.com/noahshrader/mcp-apple-notes#readme",
+  "keywords": [
+    "mcp",
+    "apple-notes",
+    "macos",
+    "automation",
+    "notes"
+  ],
   "type": "module",
   "workspaces": [
     "packages/*"

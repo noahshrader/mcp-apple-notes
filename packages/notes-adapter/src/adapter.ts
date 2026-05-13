@@ -1,4 +1,5 @@
 import { createNotesError, toNotesError } from "./errors.js";
+import { firstJsonLine } from "./execution/parse-output.js";
 import { runScript } from "./execution/run-script.js";
 import { DEFAULT_SCRIPT_TIMEOUT_MS } from "./execution/timeouts.js";
 import { runAppleNotesDiagnostics } from "./diagnostics.js";
@@ -201,8 +202,10 @@ export function createAppleNotesAdapter(
 }
 
 function parseJxaResponse<T>(stdout: string): JxaSuccess<T> | JxaFailure {
+  const candidate = firstJsonLine(stdout);
+
   try {
-    return JSON.parse(stdout) as JxaSuccess<T> | JxaFailure;
+    return JSON.parse(candidate) as JxaSuccess<T> | JxaFailure;
   } catch (error) {
     throw createNotesError("SCRIPT_EXECUTION_FAILED", "Unable to parse Apple Notes script output.", {
       details: {

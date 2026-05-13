@@ -1,4 +1,5 @@
 import { createNotesError, toNotesError } from "./errors.js";
+import { firstJsonLine } from "./execution/parse-output.js";
 import { runScript } from "./execution/run-script.js";
 import { DEFAULT_SCRIPT_TIMEOUT_MS } from "./execution/timeouts.js";
 import { buildDiagnosticsScript } from "./scripts/jxa.js";
@@ -37,7 +38,7 @@ export async function runAppleNotesDiagnostics(
       language: "JavaScript",
       timeoutMs: options.timeoutMs ?? DEFAULT_SCRIPT_TIMEOUT_MS
     });
-    const parsed = JSON.parse(result.stdout.trim()) as {
+    const parsed = JSON.parse(firstJsonLine(result.stdout)) as {
       ok: boolean;
       value?: DiagnosticsPayload;
       error?: unknown;

@@ -1,8 +1,23 @@
 {
   "name": "@mcp-apple-notes/mcp-server",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "description": "MCP server boundary for Apple Notes capabilities.",
+  "license": "MIT",
+  "author": "Noah Shrader <noahshrader@gmail.com> (https://github.com/noahshrader)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/noahshrader/mcp-apple-notes.git",
+    "directory": "packages/mcp-server"
+  },
+  "homepage": "https://github.com/noahshrader/mcp-apple-notes#readme",
+  "keywords": [
+    "mcp",
+    "apple-notes",
+    "macos",
+    "automation",
+    "server"
+  ],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

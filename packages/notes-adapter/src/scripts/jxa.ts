@@ -23,6 +23,14 @@ export function buildDiagnosticsScript(): string {
 function wrapJxa(operation: string, input: unknown): string {
   return `
 const input = ${JSON.stringify(input)};
+ObjC.import("Foundation");
+
+function writeStdout(value) {
+  const text = String(value) + "\\n";
+  $.NSFileHandle.fileHandleWithStandardOutput.writeData(
+    $(text).dataUsingEncoding($.NSUTF8StringEncoding)
+  );
+}
 
 function safeRead(read, fallback) {
   try {
@@ -140,27 +148,104 @@ function searchNotes() {
   const notes = app();
   const query = input.query ? String(input.query).toLowerCase() : "";
   const limit = Math.max(1, Math.min(Number(input.limit || 25), 100));
+  if (input.folder) {
+    return searchFolderNotes(notes, query, limit);
+  }
+
   const results = [];
   const candidates = allNotes(notes);
 
   for (let index = 0; index < candidates.length && results.length < limit; index += 1) {
     const note = candidates[index];
-    const record = noteRecord(note, true);
-    const haystack = String(record.title || "") + "\\n" + String(record.body || "");
-
-    if (!matchesOptional(record.folder, input.folder)) {
-      continue;
-    }
+    const record = noteRecord(note, false);
 
     if (!matchesOptional(record.account, input.account)) {
       continue;
     }
 
-    if (!textIncludes(haystack, query)) {
+    if (!query || textIncludes(record.title, query)) {
+      results.push(record);
       continue;
     }
 
-    delete record.body;
+    const body = asText(safeRead(function () { return note.body(); }, "")) || "";
+    if (!textIncludes(body, query)) {
+      continue;
+    }
+
+    if (body) {
+      record.excerpt = body.slice(0, 240);
+    }
+
+    results.push(record);
+  }
+
+  return results;
+}
+
+function searchFolderNotes(notes, query, limit) {
+  const folder = findFolder(notes, input.folder, input.account);
+  if (!folder) {
+    return [];
+  }
+
+  const folderName = asText(safeRead(function () { return folder.name(); }, input.folder));
+  const accountName = asText(safeRead(function () { return folder.container().name(); }, input.account));
+  const titles = safeRead(function () { return folder.notes.name(); }, []);
+  const ids = safeRead(function () { return folder.notes.id(); }, []);
+  const createdAt = safeRead(function () { return folder.notes.creationDate(); }, []);
+  const updatedAt = safeRead(function () { return folder.notes.modificationDate(); }, []);
+  const results = [];
+  let folderNotes;
+
+  function noteAt(index) {
+    if (folderNotes === undefined) {
+      folderNotes = safeRead(function () { return folder.notes(); }, []);
+    }
+    return folderNotes[index];
+  }
+
+  for (let index = 0; index < titles.length && results.length < limit; index += 1) {
+    const title = asText(titles[index]) || "Untitled";
+    const record = {
+      id: asText(ids[index]),
+      title,
+      folder: folderName,
+      account: accountName,
+      createdAt: dateToIso(createdAt[index]),
+      updatedAt: dateToIso(updatedAt[index])
+    };
+
+    if (!query || textIncludes(title, query)) {
+      results.push(record);
+    }
+  }
+
+  if (!query || results.length > 0) {
+    return results;
+  }
+
+  for (let index = 0; index < titles.length && results.length < limit; index += 1) {
+    const title = asText(titles[index]) || "Untitled";
+    const record = {
+      id: asText(ids[index]),
+      title,
+      folder: folderName,
+      account: accountName,
+      createdAt: dateToIso(createdAt[index]),
+      updatedAt: dateToIso(updatedAt[index])
+    };
+
+    const note = noteAt(index);
+    const body = asText(safeRead(function () { return note.body(); }, "")) || "";
+    if (!textIncludes(body, query)) {
+      continue;
+    }
+
+    if (body) {
+      record.excerpt = body.slice(0, 240);
+    }
+
     results.push(record);
   }
 
@@ -234,17 +319,21 @@ function run() {
   }
 }
 
-try {
-  JSON.stringify({ ok: true, value: run() });
-} catch (error) {
-  JSON.stringify({
-    ok: false,
-    error: {
-      message: String(error && error.message ? error.message : error),
-      name: String(error && error.name ? error.name : "Error"),
-      stack: String(error && error.stack ? error.stack : "")
-    }
-  });
-}
+(function () {
+  try {
+    writeStdout(JSON.stringify({ ok: true, value: run() }));
+  } catch (error) {
+    writeStdout(JSON.stringify({
+      ok: false,
+      error: {
+        message: String(error && error.message ? error.message : error),
+        name: String(error && error.name ? error.name : "Error"),
+        stack: String(error && error.stack ? error.stack : "")
+      }
+    }));
+  }
+
+  "";
+})();
 `;
 }

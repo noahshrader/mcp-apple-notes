@@ -8,7 +8,7 @@ This is not a Claude-specific project. Claude Desktop is one possible consumer a
 
 Phase 1 has a reusable Apple Notes adapter MVP. It includes a JXA-backed script boundary, structured errors, timeout handling, search/read/create/append methods, dry-run support for writes, diagnostics, and unit tests.
 
-The MCP server, CLI commands, storage implementation, and portable skill runtime are still future phases.
+The MCP server, storage implementation, and portable skill runtime are still future phases. The CLI is implemented for local diagnostics and manual adapter operations.
 
 Current packages:
 
@@ -59,8 +59,7 @@ Apple Notes access uses local macOS automation through `/usr/bin/osascript`. See
 
 Start with:
 
-- [System Overview](./SYSTEM_OVERVIEW.md)
-- [Architecture](./ARCHITECTURE.md)
-- [Implementation Plan](./IMPLEMENTATION_PLAN.md)
-- [Folder Structure](./FOLDER_STRUCTURE.md)
-- [Risks And Limitations](./RISKS_AND_LIMITATIONS.md)
+- [System Overview](./docs/SYSTEM_OVERVIEW.md)
+- [Architecture](./docs/ARCHITECTURE.md)
+- [Folder Structure](./docs/FOLDER_STRUCTURE.md)
+- [Risks And Limitations](./docs/RISKS_AND_LIMITATIONS.md)

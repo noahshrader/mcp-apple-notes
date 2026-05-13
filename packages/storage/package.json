@@ -1,8 +1,23 @@
 {
   "name": "@mcp-apple-notes/storage",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "description": "Local storage boundary for metadata, run history, and cached artifacts.",
+  "license": "MIT",
+  "author": "Noah Shrader <noahshrader@gmail.com> (https://github.com/noahshrader)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/noahshrader/mcp-apple-notes.git",
+    "directory": "packages/storage"
+  },
+  "homepage": "https://github.com/noahshrader/mcp-apple-notes#readme",
+  "keywords": [
+    "mcp",
+    "apple-notes",
+    "macos",
+    "automation",
+    "storage"
+  ],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
