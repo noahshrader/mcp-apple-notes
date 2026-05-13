@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 import { createAppleNotesAdapter, notesAdapterPackage } from "@mcp-apple-notes/notes-adapter";
-import { storagePackage } from "@mcp-apple-notes/storage";
 import { parseCliArgs } from "./args.js";
 import { executeCommand } from "./commands/execute.js";
 import { formatJson } from "./output/json.js";
@@ -12,8 +11,7 @@ export const cliPackage = {
   name: "@mcp-apple-notes/cli",
   phase: "cli-mvp",
   dependencies: [
-    notesAdapterPackage.name,
-    storagePackage.name
+    notesAdapterPackage.name
   ]
 } as const;
 

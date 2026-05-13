@@ -90,17 +90,26 @@ packages/cli/
 
 ### `packages/mcp-server`
 
-Currently a placeholder package for the future MCP stdio server.
+Implemented MCP stdio server package.
 
 ```text
 packages/mcp-server/
-└── src/
-    └── index.ts
+├── src/
+│   ├── errors.ts
+│   ├── index.ts
+│   ├── schemas.ts
+│   └── tools.ts
+└── dist/
 ```
+
+- `src/index.ts`: MCP server bootstrap and stdio entry point
+- `src/tools.ts`: tool registration and adapter delegation
+- `src/schemas.ts`: MCP tool input schemas
+- `src/errors.ts`: MCP tool error mapping helpers
 
 ### `packages/storage`
 
-Currently a placeholder package for future local persistence concerns.
+Deferred v1 placeholder package for future local persistence concerns.
 
 ```text
 packages/storage/

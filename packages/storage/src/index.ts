@@ -1,4 +1,4 @@
 export const storagePackage = {
   name: "@mcp-apple-notes/storage",
-  phase: "foundation"
+  phase: "deferred-v1"
 } as const;

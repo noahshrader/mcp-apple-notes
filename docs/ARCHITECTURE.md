@@ -38,9 +38,7 @@ It does not implement Apple Notes behavior itself. That remains in the adapter.
 
 ### `@mcp-apple-notes/mcp-server`
 
-This package is intended to expose the adapter as MCP tools over stdio. At the moment it is only a placeholder and does not instantiate an MCP server yet.
-
-When implemented, it should own:
+This package exposes the adapter as MCP tools over stdio. It owns:
 
 - MCP server startup
 - tool definitions and descriptions
@@ -49,7 +47,7 @@ When implemented, it should own:
 
 ### `@mcp-apple-notes/storage`
 
-This package is reserved for local persistence concerns such as metadata, run history, or caches. It is currently a placeholder.
+This package is reserved for local persistence concerns such as metadata, run history, or caches. It is intentionally deferred for v1 and kept private until there is a concrete storage model to implement.
 
 ## Execution Model
 
@@ -80,8 +78,8 @@ Important error codes include:
 - `TIMEOUT`
 - `UNKNOWN_ERROR`
 
-This keeps the CLI and future MCP server from having to inspect raw shell output.
+This keeps the CLI and MCP server from having to inspect raw shell output.
 
 ## Planned Next Step
 
-The next architectural milestone is implementing the MCP server package so the adapter can be consumed by MCP-compatible clients without changing the Apple Notes execution boundary.
+The next architectural milestone is only revisiting storage once there is a concrete persistence requirement, keeping any cache or run-history concerns outside the adapter and MCP transport layers.

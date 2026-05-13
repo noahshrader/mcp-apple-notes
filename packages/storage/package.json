@@ -1,8 +1,8 @@
 {
   "name": "@mcp-apple-notes/storage",
   "version": "0.1.0",
-  "private": false,
-  "description": "Local storage boundary for metadata, run history, and cached artifacts.",
+  "private": true,
+  "description": "Deferred v1 placeholder for future local metadata, run history, and cache concerns.",
   "license": "MIT",
   "author": "Noah Shrader <noahshrader@gmail.com> (https://github.com/noahshrader)",
   "repository": {

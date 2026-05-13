@@ -33,12 +33,12 @@ This means search quality is not just a query-design issue; implementation detai
 
 - Timeouts are heuristics, not guarantees. A workflow that succeeds on one machine may need a longer timeout on another.
 - Diagnostics currently depend on the same Apple automation path as normal operations, so failures may still require manual inspection.
-- The MCP server package is not implemented yet, so current public functionality is limited to the adapter and CLI.
+- MCP clients still depend on local stdio process management and local macOS automation permissions, so transport setup issues can fail before any Notes tool runs.
 
 ## Scope Limits
 
 - There is no sync engine, change feed, or conflict resolution layer today.
-- There is no completed local storage or caching layer yet.
+- Local storage and caching are intentionally deferred for v1.
 - There is no guarantee that every Apple Notes structure is accessible or writable in a stable way through automation.
 
 These are acceptable constraints for the current phase, but they should be treated as known limits rather than hidden edge cases.

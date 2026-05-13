@@ -113,14 +113,14 @@ function matchesOptional(value, expected) {
 }
 
 function findNoteById(notes, id) {
-  const candidates = allNotes(notes);
-  for (let index = 0; index < candidates.length; index += 1) {
-    const record = noteRecord(candidates[index], false);
-    if (record.id === id) {
-      return candidates[index];
-    }
+  try {
+    const note = notes.notes.byId(id);
+    // Access a property to confirm the note exists (throws if not found)
+    note.id();
+    return note;
+  } catch (_) {
+    return undefined;
   }
-  return undefined;
 }
 
 function findFolder(notes, folderName, accountName) {

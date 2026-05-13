@@ -20,7 +20,7 @@
   ],
   "type": "module",
   "bin": {
-    "mcp-apple-notes": "./dist/index.js"
+    "mcp-apple-notes-cli": "./dist/index.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -35,7 +35,6 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@mcp-apple-notes/notes-adapter": "0.1.0",
-    "@mcp-apple-notes/storage": "0.1.0"
+    "@mcp-apple-notes/notes-adapter": "0.1.0"
   }
 }
