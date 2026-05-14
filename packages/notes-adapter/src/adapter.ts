@@ -19,6 +19,7 @@ import {
   extractNotePkFromId,
   getAllTagCounts,
   getFolderNotes,
+  getNoteAttachments,
   getNoteHashtags,
   getNoteParsedData,
   getSqliteNote
@@ -165,12 +166,14 @@ export class AppleNotesAdapter {
     if (!parsed) return note;
 
     const tags = getNoteHashtags(pk);
+    const attachments = getNoteAttachments(pk);
 
     return {
       ...note,
       structured: {
         checklists: parsed.checklists,
-        tags
+        tags,
+        attachments
       }
     };
   }

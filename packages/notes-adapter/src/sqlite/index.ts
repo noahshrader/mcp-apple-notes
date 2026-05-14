@@ -2,6 +2,7 @@ export {
   extractNotePkFromId,
   getAllTagCounts,
   getFolderNotes,
+  getNoteAttachments,
   getNoteHashtags,
   getNoteParsedData,
   getSqliteNote,

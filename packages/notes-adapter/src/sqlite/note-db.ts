@@ -12,17 +12,88 @@
 
 import { DatabaseSync } from "node:sqlite";
 import { gunzipSync } from "node:zlib";
+import { readdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { parseNoteStoreProto, type ChecklistItem, type ParsedNoteData } from "./proto-parser.js";
-import type { NoteContent } from "../types.js";
+import type { NoteContent, NoteAttachment } from "../types.js";
 
-// ─── Path ────────────────────────────────────────────────────────────────────
+// ─── Paths ───────────────────────────────────────────────────────────────────
 
 const NOTE_STORE_PATH = join(
   homedir(),
   "Library/Group Containers/group.com.apple.notes/NoteStore.sqlite"
 );
+
+const NOTES_ACCOUNTS_DIR = join(
+  homedir(),
+  "Library/Group Containers/group.com.apple.notes/Accounts"
+);
+
+// ─── Attachment path resolution ──────────────────────────────────────────────
+
+/** Returns all UUID-named account directories under the Notes group container. */
+function listAccountPaths(): string[] {
+  try {
+    return readdirSync(NOTES_ACCOUNTS_DIR)
+      .filter((name) => /^[0-9A-F-]{36}$/i.test(name))
+      .map((name) => join(NOTES_ACCOUNTS_DIR, name));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Given an attachment ZIDENTIFIER UUID, find the locally cached preview
+ * (largest available PNG thumbnail) and full-resolution media path.
+ *
+ * Preview thumbnails live at:
+ *   Accounts/<acct>/Previews/<identifier>-<v>-<WxH>-<i>.png
+ *
+ * Full-res originals live at:
+ *   Accounts/<acct>/Media/<identifier>/<generation>/<filename>
+ * and are only present when iCloud has downloaded the file locally.
+ */
+function resolveAttachmentPaths(identifier: string): Pick<NoteAttachment, "previewPath" | "mediaPath"> {
+  for (const accountPath of listAccountPaths()) {
+    let previewPath: string | undefined;
+    try {
+      const previews = readdirSync(join(accountPath, "Previews"))
+        .filter((f) => f.startsWith(identifier + "-") && f.endsWith(".png"));
+      if (previews.length > 0) {
+        // Pick the highest-resolution preview
+        previews.sort((a, b) => {
+          const res = (f: string) => {
+            const m = f.match(/-(\d+)x(\d+)-/);
+            return m ? parseInt(m[1]!) * parseInt(m[2]!) : 0;
+          };
+          return res(b) - res(a);
+        });
+        previewPath = join(accountPath, "Previews", previews[0]!);
+      }
+    } catch { /* no previews directory or not accessible */ }
+
+    let mediaPath: string | undefined;
+    try {
+      const gens = readdirSync(join(accountPath, "Media", identifier));
+      outer: for (const gen of gens) {
+        const files = readdirSync(join(accountPath, "Media", identifier, gen));
+        for (const file of files) {
+          mediaPath = join(accountPath, "Media", identifier, gen, file);
+          break outer;
+        }
+      }
+    } catch { /* not cached locally */ }
+
+    if (previewPath !== undefined || mediaPath !== undefined) {
+      return {
+        ...(previewPath !== undefined && { previewPath }),
+        ...(mediaPath !== undefined && { mediaPath }),
+      };
+    }
+  }
+  return {};
+}
 
 // ─── ID helpers ──────────────────────────────────────────────────────────────
 
@@ -152,6 +223,43 @@ export function getAllTagCounts(query?: string, limit = 200): TagCount[] | null 
   }
 }
 
+// ─── Attachment lookup ────────────────────────────────────────────────────────
+
+type AttachmentRow = { ZIDENTIFIER: string | null; ZTYPEUTI: string | null };
+type AttachmentBatchRow = AttachmentRow & { ZNOTE: number };
+
+/**
+ * Return all attachments (images, PDFs, etc.) for a single note.
+ * Paths are resolved against the local Notes group container.
+ * Returns an empty array when FDA is unavailable or no attachments exist.
+ */
+export function getNoteAttachments(notePk: number): NoteAttachment[] {
+  const db = openDb();
+  if (!db) return [];
+  try {
+    const rows = db
+      .prepare(
+        "SELECT ZIDENTIFIER, ZTYPEUTI FROM ZICCLOUDSYNCINGOBJECT WHERE Z_ENT = 5 AND ZNOTE = ?"
+      )
+      .all(notePk) as AttachmentRow[];
+    return rowsToAttachments(rows);
+  } catch {
+    return [];
+  } finally {
+    try { db.close(); } catch { /* ignore */ }
+  }
+}
+
+function rowsToAttachments(rows: AttachmentRow[]): NoteAttachment[] {
+  return rows
+    .filter((r) => r.ZIDENTIFIER !== null)
+    .map((r): NoteAttachment => ({
+      identifier: r.ZIDENTIFIER!,
+      typeUti: r.ZTYPEUTI ?? "application/octet-stream",
+      ...resolveAttachmentPaths(r.ZIDENTIFIER!),
+    }));
+}
+
 /**
  * Check whether the NoteStore.sqlite is readable (i.e. Full Disk Access is
  * granted). Returns true if a test query succeeds.
@@ -269,6 +377,28 @@ export function getFolderNotes(folderName: string): NoteContent[] | null {
       tagsByPk.set(r.ZNOTE1, list);
     }
 
+    // Batch-load attachments (ICAttachment = Z_ENT 5, FK column ZNOTE)
+    const attachmentRows = db
+      .prepare(
+        `SELECT ZNOTE, ZIDENTIFIER, ZTYPEUTI
+         FROM ZICCLOUDSYNCINGOBJECT
+         WHERE Z_ENT = 5 AND ZNOTE IN (${placeholders})`
+      )
+      .all(...pks) as AttachmentBatchRow[];
+
+    const attachmentsByPk = new Map<number, NoteAttachment[]>();
+    for (const r of attachmentRows) {
+      if (r.ZIDENTIFIER === null) continue;
+      const attachment: NoteAttachment = {
+        identifier: r.ZIDENTIFIER,
+        typeUti: r.ZTYPEUTI ?? "application/octet-stream",
+        ...resolveAttachmentPaths(r.ZIDENTIFIER),
+      };
+      const list = attachmentsByPk.get(r.ZNOTE) ?? [];
+      list.push(attachment);
+      attachmentsByPk.set(r.ZNOTE, list);
+    }
+
     return noteRows.map((nr): NoteContent => {
       const id = `x-coredata://${storeUuid}/ICNote/p${nr.Z_PK}`;
 
@@ -287,6 +417,7 @@ export function getFolderNotes(folderName: string): NoteContent[] | null {
       }
 
       const tags = tagsByPk.get(nr.Z_PK) ?? [];
+      const attachments = attachmentsByPk.get(nr.Z_PK) ?? [];
 
       return {
         id,
@@ -295,7 +426,7 @@ export function getFolderNotes(folderName: string): NoteContent[] | null {
         ...(cdateToIso(nr.ZCREATIONDATE1) !== undefined && { createdAt: cdateToIso(nr.ZCREATIONDATE1)! }),
         ...(cdateToIso(nr.ZMODIFICATIONDATE1) !== undefined && { updatedAt: cdateToIso(nr.ZMODIFICATIONDATE1)! }),
         body,
-        structured: { checklists, tags }
+        structured: { checklists, tags, attachments }
       };
     });
   } catch {
@@ -374,6 +505,14 @@ export function getSqliteNote(notePk: number): NoteContent | null {
       .all(notePk) as SingleTagRow[];
     const tags = tagRows.map((r) => r.ZALTTEXT);
 
+    // Attachments
+    const attachmentRows = db
+      .prepare(
+        "SELECT ZIDENTIFIER, ZTYPEUTI FROM ZICCLOUDSYNCINGOBJECT WHERE Z_ENT = 5 AND ZNOTE = ?"
+      )
+      .all(notePk) as AttachmentRow[];
+    const attachments = rowsToAttachments(attachmentRows);
+
     return {
       id: `x-coredata://${storeUuid}/ICNote/p${notePk}`,
       title: nr.ZTITLE1 ?? "(Untitled)",
@@ -381,7 +520,7 @@ export function getSqliteNote(notePk: number): NoteContent | null {
       ...(cdateToIso(nr.ZCREATIONDATE1) !== undefined && { createdAt: cdateToIso(nr.ZCREATIONDATE1)! }),
       ...(cdateToIso(nr.ZMODIFICATIONDATE1) !== undefined && { updatedAt: cdateToIso(nr.ZMODIFICATIONDATE1)! }),
       body,
-      structured: { checklists, tags }
+      structured: { checklists, tags, attachments }
     };
   } catch {
     return null;

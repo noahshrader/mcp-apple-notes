@@ -49,6 +49,23 @@ export type ChecklistItem = {
   done: boolean;
 };
 
+export type NoteAttachment = {
+  /** ZIDENTIFIER from ICAttachment — stable UUID for this attachment. */
+  identifier: string;
+  /** UTI of the original file (e.g. `'public.heic'`, `'public.png'`). */
+  typeUti: string;
+  /**
+   * Path to the largest locally-cached preview thumbnail (PNG).
+   * Present when the attachment has been downloaded or a preview has been generated.
+   */
+  previewPath?: string;
+  /**
+   * Path to the full-resolution original file.
+   * Only present when iCloud has downloaded the file to this machine.
+   */
+  mediaPath?: string;
+};
+
 export type NoteStructuredContent = {
   /**
    * Checklist / to-do items extracted from the note via protobuf parsing.
@@ -60,6 +77,11 @@ export type NoteStructuredContent = {
    * Requires Full Disk Access; empty array when unavailable.
    */
   tags: string[];
+  /**
+   * Attachments (images, PDFs, etc.) embedded in the note.
+   * Requires Full Disk Access; empty array when unavailable.
+   */
+  attachments: NoteAttachment[];
 };
 
 export type NoteContent = NoteSummary & {
