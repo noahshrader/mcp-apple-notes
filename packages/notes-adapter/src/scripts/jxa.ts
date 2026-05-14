@@ -1,7 +1,17 @@
-import type { AppendNoteInput, CreateNoteInput, ReadNoteInput, SearchNotesInput } from "../types.js";
+import type {
+  AppendNoteInput,
+  CreateNoteInput,
+  ReadNoteInput,
+  SearchNotesInput,
+  SearchTagsInput
+} from "../types.js";
 
 export function buildSearchNotesScript(input: SearchNotesInput): string {
   return wrapJxa("searchNotes", input);
+}
+
+export function buildSearchTagsScript(input: SearchTagsInput): string {
+  return wrapJxa("searchTags", input);
 }
 
 export function buildReadNoteScript(input: ReadNoteInput): string {
@@ -252,6 +262,113 @@ function searchFolderNotes(notes, query, limit) {
   return results;
 }
 
+function normalizedTagQuery() {
+  if (!input.query) {
+    return "";
+  }
+  return String(input.query).replace(/^#+/, "").toLowerCase();
+}
+
+function tagCharacter(value) {
+  return /[A-Za-z0-9_-]/.test(value) || value.charCodeAt(0) > 127;
+}
+
+function extractTags(value, query, counts) {
+  const text = String(value || "");
+  for (let index = 0; index < text.length; index += 1) {
+    if (text[index] !== "#") {
+      continue;
+    }
+
+    const previous = index > 0 ? text[index - 1] : "";
+    if (previous && tagCharacter(previous)) {
+      continue;
+    }
+
+    let cursor = index + 1;
+    while (cursor < text.length && tagCharacter(text[cursor])) {
+      cursor += 1;
+    }
+
+    if (cursor === index + 1) {
+      continue;
+    }
+
+    const rawName = text.slice(index + 1, cursor);
+    if (query && rawName.toLowerCase().indexOf(query) === -1) {
+      continue;
+    }
+
+    const tagName = "#" + rawName;
+    const key = tagName.toLowerCase();
+    if (!counts[key]) {
+      counts[key] = {
+        name: tagName,
+        count: 0
+      };
+    }
+    counts[key].count += 1;
+    index = cursor - 1;
+  }
+}
+
+function searchTags() {
+  const notes = app();
+  const query = normalizedTagQuery();
+  const limit = input.limit ? Math.max(1, Number(input.limit)) : 250;
+  const maxNotes = input.maxNotes ? Math.max(1, Number(input.maxNotes)) : Infinity;
+  const timeBudgetMs = input.timeBudgetMs ? Math.max(1000, Number(input.timeBudgetMs)) : 25000;
+  const deadline = Date.now() + timeBudgetMs;
+  const counts = {};
+  const candidates = input.folder ? notesForFolder(notes) : allNotes(notes);
+  const totalNoteCount = candidates.length;
+  let scannedNoteCount = 0;
+  let truncated = false;
+
+  for (let index = 0; index < candidates.length; index += 1) {
+    if (scannedNoteCount >= maxNotes || Date.now() >= deadline) {
+      truncated = true;
+      break;
+    }
+
+    const note = candidates[index];
+    const title = asText(safeRead(function () { return note.name(); }, "")) || "";
+    extractTags(title, query, counts);
+
+    const body = asText(safeRead(function () { return note.body(); }, "")) || "";
+    extractTags(body, query, counts);
+    scannedNoteCount += 1;
+  }
+
+  const tags = Object.keys(counts)
+    .map(function (key) {
+      return counts[key];
+    })
+    .sort(function (left, right) {
+      const countDifference = right.count - left.count;
+      if (countDifference !== 0) {
+        return countDifference;
+      }
+      return left.name.toLowerCase() < right.name.toLowerCase() ? -1 : 1;
+    })
+    .slice(0, limit);
+
+  return {
+    tags,
+    scannedNoteCount,
+    totalNoteCount,
+    truncated
+  };
+}
+
+function notesForFolder(notes) {
+  const folder = findFolder(notes, input.folder, input.account);
+  if (!folder) {
+    return [];
+  }
+  return safeRead(function () { return folder.notes(); }, []);
+}
+
 function readNote() {
   const notes = app();
   const note = findNoteById(notes, input.id);
@@ -306,6 +423,8 @@ function run() {
   switch (${JSON.stringify(operation)}) {
     case "searchNotes":
       return searchNotes();
+    case "searchTags":
+      return searchTags();
     case "readNote":
       return readNote();
     case "createNote":

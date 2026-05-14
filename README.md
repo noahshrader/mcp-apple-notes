@@ -111,6 +111,8 @@ Tool result: 1 note found titled "2026-05-10"
 Assistant: I found one note titled 2026-05-10 in Notes. I can read it next if you want.
 ```
 
+The server also exposes `search_tags` for hashtags in Apple Notes titles and bodies. Large Notes libraries can be slow through Apple Events, so tag search accepts `folder`, `limit`, `maxNotes`, and `timeBudgetMs` and may return `truncated: true` with partial results instead of waiting indefinitely.
+
 ## Apple Notes Permissions
 
 Apple Notes access uses local macOS automation through `/usr/bin/osascript`. See [macOS Permissions](./docs/permissions.md) before running integration operations against Notes.

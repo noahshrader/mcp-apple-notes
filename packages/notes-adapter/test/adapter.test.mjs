@@ -27,6 +27,30 @@ test("searchNotes can run through an injected script runner", async () => {
   assert.equal(result.value[0].title, "Injected");
 });
 
+test("searchTags can run through an injected script runner", async () => {
+  const adapter = createAppleNotesAdapter({
+    runner: async () => ({
+      stdout: JSON.stringify({
+        ok: true,
+        value: {
+          tags: [{ name: "#Product", count: 2 }],
+          scannedNoteCount: 3,
+          totalNoteCount: 3,
+          truncated: false
+        }
+      }),
+      stderr: "",
+      exitCode: 0
+    })
+  });
+
+  const result = await adapter.searchTags({ query: "prod" });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.value.tags[0].name, "#Product");
+  assert.equal(result.value.truncated, false);
+});
+
 test("createNote dry-run does not invoke the script runner", async () => {
   let runnerCalled = false;
   const adapter = createAppleNotesAdapter({
@@ -81,6 +105,14 @@ test("appendToNote dry-run reads the note before previewing the mutation", async
 test("validation errors are returned instead of thrown", async () => {
   const adapter = createAppleNotesAdapter();
   const result = await adapter.readNote({ id: "" });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.error.code, "VALIDATION_ERROR");
+});
+
+test("tag search validation errors are returned instead of thrown", async () => {
+  const adapter = createAppleNotesAdapter();
+  const result = await adapter.searchTags({ maxNotes: 0 });
 
   assert.equal(result.ok, false);
   assert.equal(result.error.code, "VALIDATION_ERROR");

@@ -10,7 +10,9 @@ import type {
   NotesDiagnostics,
   NotesError,
   NotesResult,
-  SearchNotesInput
+  SearchNotesInput,
+  SearchTagsInput,
+  SearchTagsResult
 } from "@mcp-apple-notes/notes-adapter";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -20,7 +22,8 @@ import {
   createNoteInputSchema,
   diagnosticsInputSchema,
   readNoteInputSchema,
-  searchNotesInputSchema
+  searchNotesInputSchema,
+  searchTagsInputSchema
 } from "./schemas.js";
 
 export function registerAppleNotesTools(
@@ -36,6 +39,16 @@ export function registerAppleNotesTools(
     },
     async (input) =>
       toSuccessOrError("results", await adapter.searchNotes(toSearchNotesInput(input)))
+  );
+
+  server.registerTool(
+    "search_tags",
+    {
+      title: "Search Tags",
+      description: "Search hashtags used in Apple Notes titles and bodies.",
+      inputSchema: searchTagsInputSchema
+    },
+    async (input) => toSuccessOrError("result", await adapter.searchTags(toSearchTagsInput(input)))
   );
 
   server.registerTool(
@@ -111,6 +124,7 @@ type ToolPayloadKey = "results" | "note" | "result" | "diagnostics";
 
 type ToolValue =
   | NoteSummary[]
+  | SearchTagsResult
   | NoteContent
   | CreateNoteResult
   | AppendNoteResult
@@ -142,6 +156,43 @@ function toSearchNotesInput(input: {
 
   if (input.limit !== undefined) {
     normalized.limit = input.limit;
+  }
+
+  return normalized;
+}
+
+function toSearchTagsInput(input: {
+  query?: string | undefined;
+  folder?: string | undefined;
+  account?: string | undefined;
+  limit?: number | undefined;
+  maxNotes?: number | undefined;
+  timeBudgetMs?: number | undefined;
+}): SearchTagsInput {
+  const normalized: SearchTagsInput = {};
+
+  if (input.query !== undefined) {
+    normalized.query = input.query;
+  }
+
+  if (input.folder !== undefined) {
+    normalized.folder = input.folder;
+  }
+
+  if (input.account !== undefined) {
+    normalized.account = input.account;
+  }
+
+  if (input.limit !== undefined) {
+    normalized.limit = input.limit;
+  }
+
+  if (input.maxNotes !== undefined) {
+    normalized.maxNotes = input.maxNotes;
+  }
+
+  if (input.timeBudgetMs !== undefined) {
+    normalized.timeBudgetMs = input.timeBudgetMs;
   }
 
   return normalized;

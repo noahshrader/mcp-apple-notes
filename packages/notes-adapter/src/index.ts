@@ -41,5 +41,8 @@ export type {
   ScriptExecutionRequest,
   ScriptExecutionResult,
   ScriptRunner,
-  SearchNotesInput
+  SearchNotesInput,
+  SearchTagsInput,
+  SearchTagsResult,
+  TagSummary
 } from "./types.js";

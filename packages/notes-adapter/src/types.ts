@@ -46,6 +46,18 @@ export type NoteContent = NoteSummary & {
   body: string;
 };
 
+export type TagSummary = {
+  name: string;
+  count: number;
+};
+
+export type SearchTagsResult = {
+  tags: TagSummary[];
+  scannedNoteCount: number;
+  totalNoteCount?: number;
+  truncated: boolean;
+};
+
 export type RawNoteRecord = {
   id?: unknown;
   title?: unknown;
@@ -63,6 +75,15 @@ export type SearchNotesInput = {
   folder?: string;
   account?: string;
   limit?: number;
+};
+
+export type SearchTagsInput = {
+  query?: string;
+  folder?: string;
+  account?: string;
+  limit?: number;
+  maxNotes?: number;
+  timeBudgetMs?: number;
 };
 
 export type ReadNoteInput = {

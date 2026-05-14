@@ -7,6 +7,15 @@ export const searchNotesInputSchema = {
   limit: z.number().int().positive().optional().describe("Maximum number of notes to return.")
 };
 
+export const searchTagsInputSchema = {
+  query: z.string().optional().describe("Tag text to match, with or without a leading #."),
+  folder: z.string().optional().describe("Folder name to scope the tag search to."),
+  account: z.string().optional().describe("Account name to scope the tag search to."),
+  limit: z.number().int().positive().optional().describe("Maximum number of tags to return."),
+  maxNotes: z.number().int().positive().optional().describe("Maximum number of notes to scan."),
+  timeBudgetMs: z.number().int().positive().optional().describe("Maximum scan time before returning partial results.")
+};
+
 export const readNoteInputSchema = {
   id: z.string().trim().min(1).describe("Opaque Apple Notes note identifier.")
 };
@@ -30,6 +39,7 @@ export const diagnosticsInputSchema = {};
 
 export const notesToolInputSchemas = {
   searchNotes: searchNotesInputSchema,
+  searchTags: searchTagsInputSchema,
   readNote: readNoteInputSchema,
   createNote: createNoteInputSchema,
   appendNote: appendNoteInputSchema,

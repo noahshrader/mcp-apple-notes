@@ -7,7 +7,8 @@ import {
   buildAppendNoteScript,
   buildCreateNoteScript,
   buildReadNoteScript,
-  buildSearchNotesScript
+  buildSearchNotesScript,
+  buildSearchTagsScript
 } from "./scripts/jxa.js";
 import {
   normalizeNoteContent,
@@ -27,7 +28,9 @@ import type {
   RawNoteRecord,
   ReadNoteInput,
   ScriptRunner,
-  SearchNotesInput
+  SearchNotesInput,
+  SearchTagsInput,
+  SearchTagsResult
 } from "./types.js";
 
 type JxaSuccess<T> = {
@@ -62,6 +65,17 @@ export class AppleNotesAdapter {
     return this.capture(async () => {
       const payload = await this.runJxa<RawNoteRecord[]>(buildSearchNotesScript(input));
       return normalizeNotesSearchResults(payload);
+    });
+  }
+
+  async searchTags(input: SearchTagsInput = {}): Promise<NotesResult<SearchTagsResult>> {
+    const validationError = validateSearchTagsInput(input);
+    if (validationError !== undefined) {
+      return validationError;
+    }
+
+    return this.capture(async () => {
+      return this.runJxa<SearchTagsResult>(buildSearchTagsScript(input));
     });
   }
 
@@ -243,6 +257,36 @@ function validateSearchInput(
     return {
       ok: false,
       error: createNotesError("VALIDATION_ERROR", "Search limit must be a positive integer.")
+    };
+  }
+
+  return undefined;
+}
+
+function validateSearchTagsInput(
+  input: SearchTagsInput
+): NotesResult<SearchTagsResult> | undefined {
+  if (input.limit !== undefined && (!Number.isInteger(input.limit) || input.limit <= 0)) {
+    return {
+      ok: false,
+      error: createNotesError("VALIDATION_ERROR", "Tag search limit must be a positive integer.")
+    };
+  }
+
+  if (input.maxNotes !== undefined && (!Number.isInteger(input.maxNotes) || input.maxNotes <= 0)) {
+    return {
+      ok: false,
+      error: createNotesError("VALIDATION_ERROR", "Tag search maxNotes must be a positive integer.")
+    };
+  }
+
+  if (
+    input.timeBudgetMs !== undefined &&
+    (!Number.isInteger(input.timeBudgetMs) || input.timeBudgetMs <= 0)
+  ) {
+    return {
+      ok: false,
+      error: createNotesError("VALIDATION_ERROR", "Tag search timeBudgetMs must be a positive integer.")
     };
   }
 
