@@ -46,7 +46,7 @@ export function registerAppleNotesTools(
     "search_tags",
     {
       title: "Search Tags",
-      description: "Search hashtags used in Apple Notes titles and bodies.",
+      description: "Search hashtags used in Apple Notes. When Full Disk Access is granted, uses a fast direct SQLite query returning all tags with occurrence counts. Falls back to a JXA body-text scan when Full Disk Access is unavailable.",
       inputSchema: searchTagsInputSchema
     },
     async (input) => toSuccessOrError("result", await adapter.searchTags(toSearchTagsInput(input)))
@@ -56,7 +56,7 @@ export function registerAppleNotesTools(
     "read_note",
     {
       title: "Read Note",
-      description: "Read a single Apple Note by its opaque identifier.",
+      description: "Read a single Apple Note by its opaque identifier. When Full Disk Access is granted, the response includes a `structured` field with `checklists` (each item has `text` and `done` boolean) and `tags` (hashtags attached to the note).",
       inputSchema: readNoteInputSchema
     },
     async (input) => toSuccessOrError("note", await adapter.readNote(input))
@@ -66,7 +66,7 @@ export function registerAppleNotesTools(
     "read_folder",
     {
       title: "Read Folder",
-      description: "Read the full plain-text body of every note in an Apple Notes folder in a single call. Returns an array of notes sorted by the order Apple Notes stores them. Suitable for bulk analysis without per-note round-trips.",
+      description: "Read the full plain-text body of every note in an Apple Notes folder in a single call. Returns an array of notes sorted by the order Apple Notes stores them. When Full Disk Access is granted, each note includes a `structured` field with `checklists` (items with `text` and `done`) and `tags` (hashtags). Suitable for bulk analysis without per-note round-trips.",
       inputSchema: readFolderInputSchema
     },
     async (input) => {

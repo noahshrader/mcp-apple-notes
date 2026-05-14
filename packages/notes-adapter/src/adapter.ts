@@ -15,6 +15,14 @@ import {
   normalizeNoteContent,
   normalizeNotesSearchResults
 } from "./normalization/notes.js";
+import {
+  extractNotePkFromId,
+  getAllTagCounts,
+  getFolderNotes,
+  getNoteHashtags,
+  getNoteParsedData,
+  getSqliteNote
+} from "./sqlite/note-db.js";
 import type {
   AppendNoteInput,
   AppendNoteResult,
@@ -77,6 +85,22 @@ export class AppleNotesAdapter {
       return validationError;
     }
 
+    // Fast path: query NoteStore.sqlite directly (requires Full Disk Access).
+    // getAllTagCounts returns null when the DB is not accessible, so we only
+    // bypass JXA when we can actually get the data.
+    const sqliteTags = getAllTagCounts(input.query, input.limit ?? 200);
+    if (sqliteTags !== null) {
+      return {
+        ok: true,
+        value: {
+          tags: sqliteTags.map((t) => ({ name: t.tag, count: t.count })),
+          scannedNoteCount: sqliteTags.length,
+          truncated: false
+        }
+      };
+    }
+
+    // Fallback: JXA text scan (slower, no Full Disk Access required).
     return this.capture(async () => {
       return this.runJxa<SearchTagsResult>(buildSearchTagsScript(input));
     });
@@ -88,9 +112,19 @@ export class AppleNotesAdapter {
       return validationError;
     }
 
+    // Fast path: read body, checklists, and tags from SQLite in one DB open.
+    const pk = extractNotePkFromId(input.id);
+    if (pk !== null) {
+      const sqliteNote = getSqliteNote(pk);
+      if (sqliteNote !== null) {
+        return { ok: true, value: sqliteNote };
+      }
+    }
+
+    // Fallback: JXA + enrichment (no FDA or non-standard ID format).
     return this.capture(async () => {
       const payload = await this.runJxa<RawNoteRecord>(buildReadNoteScript(input));
-      return normalizeNoteContent(payload);
+      return this.enrichNote(normalizeNoteContent(payload));
     });
   }
 
@@ -100,13 +134,45 @@ export class AppleNotesAdapter {
       return validationError;
     }
 
+    // Fast path: read everything — body text, checklists, and tags — directly
+    // from NoteStore.sqlite in a single DB open (no JXA, no AppleScript bridge).
+    // Returns null when FDA is unavailable or the folder cannot be found.
+    const sqliteNotes = getFolderNotes(input.folder);
+    if (sqliteNotes !== null) {
+      return { ok: true, value: sqliteNotes };
+    }
+
+    // Fallback: JXA + per-note SQLite enrichment (no FDA or folder name mismatch).
     return this.capture(async () => {
       const payload = await this.runJxa<RawNoteRecord[]>(buildReadFolderScript(input));
       if (!Array.isArray(payload)) {
         throw new Error("Expected array from readFolder script");
       }
-      return payload.map(normalizeNoteContent);
+      return payload.map((r) => this.enrichNote(normalizeNoteContent(r)));
     });
+  }
+
+  /**
+   * Attempt to enrich a JXA-sourced note with structured content from
+   * NoteStore.sqlite (checklists, hashtags). Silently returns the original
+   * note unchanged when Full Disk Access is not available.
+   */
+  private enrichNote(note: NoteContent): NoteContent {
+    const pk = extractNotePkFromId(note.id);
+    if (pk === null) return note;
+
+    const parsed = getNoteParsedData(pk);
+    if (!parsed) return note;
+
+    const tags = getNoteHashtags(pk);
+
+    return {
+      ...note,
+      structured: {
+        checklists: parsed.checklists,
+        tags
+      }
+    };
   }
 
   async createNote(input: CreateNoteInput): Promise<NotesResult<CreateNoteResult>> {

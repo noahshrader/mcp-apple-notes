@@ -42,8 +42,33 @@ export type NoteSummary = {
   excerpt?: string;
 };
 
+export type ChecklistItem = {
+  /** Plain text of the checklist item, without leading markers. */
+  text: string;
+  /** Whether the item is checked (done). */
+  done: boolean;
+};
+
+export type NoteStructuredContent = {
+  /**
+   * Checklist / to-do items extracted from the note via protobuf parsing.
+   * Requires Full Disk Access; empty array when unavailable.
+   */
+  checklists: ChecklistItem[];
+  /**
+   * Hashtags attached to this note (e.g. `#work`, `#idea`).
+   * Requires Full Disk Access; empty array when unavailable.
+   */
+  tags: string[];
+};
+
 export type NoteContent = NoteSummary & {
   body: string;
+  /**
+   * Structured content parsed directly from NoteStore.sqlite.
+   * Present when Full Disk Access is granted; undefined otherwise.
+   */
+  structured?: NoteStructuredContent;
 };
 
 export type TagSummary = {

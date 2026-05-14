@@ -22,15 +22,27 @@ export {
   normalizeNotesSearchResults,
   stripHtml
 } from "./normalization/notes.js";
+export {
+  extractNotePkFromId,
+  getAllTagCounts,
+  getFolderNotes,
+  getNoteHashtags,
+  getNoteParsedData,
+  getSqliteNote,
+  isNoteStoreReadable,
+  parseNoteStoreProto
+} from "./sqlite/index.js";
 export type {
   AppendNoteInput,
   AppendNoteResult,
   AppleNotesAdapterOptions,
+  ChecklistItem,
   CreateNoteInput,
   CreateNoteResult,
   MutationPreview,
   NoteContent,
   NoteReference,
+  NoteStructuredContent,
   NoteSummary,
   NotesDiagnostics,
   NotesError,
