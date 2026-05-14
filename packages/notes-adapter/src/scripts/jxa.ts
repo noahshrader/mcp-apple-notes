@@ -410,10 +410,12 @@ function readFolder() {
 
 function createNote() {
   const notes = app();
-  const note = notes.Note({
-    name: input.title,
-    body: input.body
-  });
+  // When a body is provided, let Apple Notes derive the note name from the
+  // first line of body content (typically an <h1> title block). Setting both
+  // name and body with an <h1> causes the title to appear twice in the note.
+  // Fall back to name-only when no body is given.
+  const config = input.body ? { body: input.body } : { name: input.title };
+  const note = notes.Note(config);
 
   if (input.folder) {
     const folder = findFolder(notes, input.folder, input.account);

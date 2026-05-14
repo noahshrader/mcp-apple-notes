@@ -3,6 +3,24 @@ export {
   createAppleNotesAdapter
 } from "./adapter.js";
 export {
+  buildAppleNotesHtml
+} from "./formatting/note-html.js";
+export type {
+  BlockquoteBlock,
+  BulletListBlock,
+  BodyBlock,
+  ChecklistBlock,
+  ChecklistItem as NoteChecklistItem,
+  DashListBlock,
+  HeadingBlock,
+  MonospaceBlock,
+  NoteBlock,
+  NumberedListBlock,
+  SubheadingBlock,
+  TableBlock,
+  TitleBlock
+} from "./formatting/note-html.js";
+export {
   runAppleNotesDiagnostics
 } from "./diagnostics.js";
 
