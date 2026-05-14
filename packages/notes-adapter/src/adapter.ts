@@ -32,7 +32,6 @@ import type {
   CreateNoteResult,
   MutationPreview,
   NoteContent,
-  NoteReference,
   NoteSummary,
   NotesResult,
   NotesDiagnostics,
