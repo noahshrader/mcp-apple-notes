@@ -2,6 +2,7 @@ import type {
   AppendNoteInput,
   CreateNoteInput,
   NotesError,
+  ReadFolderInput,
   SearchNotesInput
 } from "@mcp-apple-notes/notes-adapter";
 import type {
@@ -32,6 +33,11 @@ export async function executeCommand(
           await adapter.readNote({
             id: requiredOption(request.options, "id")
           })
+        );
+      case "read-folder":
+        return fromAdapterResult(
+          request.command,
+          await adapter.readFolder(buildReadFolderInput(request.options))
         );
       case "create-preview":
         return fromAdapterResult(
@@ -114,6 +120,19 @@ function fromAdapterResult(
     command,
     data: result.value
   };
+}
+
+function buildReadFolderInput(options: CliOptions): ReadFolderInput {
+  const input: ReadFolderInput = {
+    folder: requiredOption(options, "folder")
+  };
+
+  const account = options["account"];
+  if (typeof account === "string") {
+    input.account = account;
+  }
+
+  return input;
 }
 
 function buildSearchInput(options: CliOptions): SearchNotesInput {

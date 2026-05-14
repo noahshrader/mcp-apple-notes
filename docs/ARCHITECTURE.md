@@ -14,11 +14,11 @@ This package is the execution boundary for Apple Notes. It is responsible for:
 - normalization of raw note records
 - conversion of failures into stable error codes
 
-Its public surface is the `AppleNotesAdapter` plus typed inputs and outputs such as `SearchNotesInput`, `NoteSummary`, `NoteContent`, and `NotesResult<T>`.
+Its public surface is the `AppleNotesAdapter` plus typed inputs and outputs such as `SearchNotesInput`, `ReadFolderInput`, `NoteSummary`, `NoteContent`, and `NotesResult<T>`.
 
 Internally, the package is split into focused layers:
 
-- `adapter.ts`: public operations such as search, read, create, append, and diagnostics
+- `adapter.ts`: public operations — search, read, read-folder (bulk), create, append, and diagnostics
 - `scripts/jxa.ts`: generated JXA source for Apple Notes automation
 - `execution/`: script runner and timeout helpers
 - `normalization/`: HTML stripping and note result normalization

@@ -6,9 +6,9 @@ This is not a Claude-specific project. Claude Desktop is one possible consumer a
 
 ## Current Status
 
-Phase 1 has a reusable Apple Notes adapter MVP. It includes a JXA-backed script boundary, structured errors, timeout handling, search/read/create/append methods, dry-run support for writes, diagnostics, and unit tests.
+Phase 1 has a reusable Apple Notes adapter MVP. It includes a JXA-backed script boundary, structured errors, timeout handling, search/read/read-folder/create/append methods, dry-run support for writes, diagnostics, and unit tests.
 
-The MCP server is now implemented over stdio with search, read, create, append, and diagnostics tools. Storage is explicitly deferred for v1 because the current release does not need cache, metadata, or sync state. The CLI is implemented for local diagnostics and manual adapter operations.
+The MCP server is now implemented over stdio with search, read, read-folder, create, append, and diagnostics tools. The `read_folder` tool reads every note body in a folder in a single JXA call — suitable for bulk analysis without per-note round-trips. Storage is explicitly deferred for v1 because the current release does not need cache, metadata, or sync state. The CLI is implemented for local diagnostics and manual adapter operations.
 
 Current packages:
 
@@ -36,6 +36,8 @@ npm run cli -- --help
 npm run cli -- diagnostics
 npm run cli -- search --query "project memory" --limit 5
 npm run cli -- read --id "<note-id>"
+npm run cli -- read-folder --folder "2024"
+npm run cli -- read-folder --folder "2024" --account "iCloud"
 npm run cli -- create-preview --title "Draft" --body "Body"
 npm run cli -- create --title "Draft" --body "Body"
 npm run cli -- append-preview --id "<note-id>" --content "New section"
@@ -112,6 +114,19 @@ Assistant: I found one note titled 2026-05-10 in Notes. I can read it next if yo
 ```
 
 The server also exposes `search_tags` for hashtags in Apple Notes titles and bodies. Large Notes libraries can be slow through Apple Events, so tag search accepts `folder`, `limit`, `maxNotes`, and `timeBudgetMs` and may return `truncated: true` with partial results instead of waiting indefinitely.
+
+### Bulk folder reads
+
+The `read_folder` tool reads the full plain-text body of every note in a folder in a single JXA call. This avoids per-note round-trips and is the correct approach for bulk analysis such as annual reviews, summaries, or prompt-based processing.
+
+```json
+{
+	"folder": "2024",
+	"account": "iCloud"
+}
+```
+
+The tool returns an array of `NoteContent` objects, each with `id`, `title`, `folder`, `account`, `createdAt`, `updatedAt`, and `body` (plain text). The `account` field is optional and scopes the folder lookup when multiple accounts share a folder name.
 
 ## Apple Notes Permissions
 

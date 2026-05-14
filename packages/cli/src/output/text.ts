@@ -45,6 +45,8 @@ function formatSuccess(command: string, data: CliSuccessData): string {
       return formatSearchResults(data as NoteSummary[]);
     case "read":
       return formatNoteContent(data as NoteContent);
+    case "read-folder":
+      return formatFolderNotes(data as NoteContent[]);
     case "create-preview":
     case "append-preview":
       return formatPreview((data as CreateNoteResult | AppendNoteResult).preview);
@@ -120,6 +122,22 @@ function formatNoteContent(note: NoteContent): string {
 
   lines.push("", note.body);
   return lines.join("\n");
+}
+
+function formatFolderNotes(notes: NoteContent[]): string {
+  if (notes.length === 0) {
+    return "No notes found in folder.";
+  }
+
+  const folderName = notes.find((n) => n.folder !== undefined)?.folder ?? "unknown";
+  const header = `${notes.length} note${notes.length === 1 ? "" : "s"} in "${folderName}"\n`;
+
+  const body = notes.map((note, index) => {
+    const divider = `--- ${index + 1}. ${note.title} ---`;
+    return [divider, note.body].join("\n");
+  }).join("\n\n");
+
+  return header + "\n" + body;
 }
 
 function formatMutationResult(result: CreateNoteResult | AppendNoteResult): string {

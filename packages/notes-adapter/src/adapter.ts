@@ -6,6 +6,7 @@ import { runAppleNotesDiagnostics } from "./diagnostics.js";
 import {
   buildAppendNoteScript,
   buildCreateNoteScript,
+  buildReadFolderScript,
   buildReadNoteScript,
   buildSearchNotesScript,
   buildSearchTagsScript
@@ -22,10 +23,12 @@ import type {
   CreateNoteResult,
   MutationPreview,
   NoteContent,
+  NoteReference,
   NoteSummary,
   NotesResult,
   NotesDiagnostics,
   RawNoteRecord,
+  ReadFolderInput,
   ReadNoteInput,
   ScriptRunner,
   SearchNotesInput,
@@ -88,6 +91,21 @@ export class AppleNotesAdapter {
     return this.capture(async () => {
       const payload = await this.runJxa<RawNoteRecord>(buildReadNoteScript(input));
       return normalizeNoteContent(payload);
+    });
+  }
+
+  async readFolder(input: ReadFolderInput): Promise<NotesResult<NoteContent[]>> {
+    const validationError = validateRequiredString<NoteContent[]>(input.folder, "folder");
+    if (validationError !== undefined) {
+      return validationError;
+    }
+
+    return this.capture(async () => {
+      const payload = await this.runJxa<RawNoteRecord[]>(buildReadFolderScript(input));
+      if (!Array.isArray(payload)) {
+        throw new Error("Expected array from readFolder script");
+      }
+      return payload.map(normalizeNoteContent);
     });
   }
 

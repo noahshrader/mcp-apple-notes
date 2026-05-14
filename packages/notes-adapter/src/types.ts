@@ -90,6 +90,11 @@ export type ReadNoteInput = {
   id: string;
 };
 
+export type ReadFolderInput = {
+  folder: string;
+  account?: string;
+};
+
 export type CreateNoteInput = {
   title: string;
   body: string;

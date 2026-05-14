@@ -1,6 +1,7 @@
 import type {
   AppendNoteInput,
   CreateNoteInput,
+  ReadFolderInput,
   ReadNoteInput,
   SearchNotesInput,
   SearchTagsInput
@@ -16,6 +17,10 @@ export function buildSearchTagsScript(input: SearchTagsInput): string {
 
 export function buildReadNoteScript(input: ReadNoteInput): string {
   return wrapJxa("readNote", input);
+}
+
+export function buildReadFolderScript(input: ReadFolderInput): string {
+  return wrapJxa("readFolder", input);
 }
 
 export function buildCreateNoteScript(input: CreateNoteInput): string {
@@ -378,6 +383,31 @@ function readNote() {
   return noteRecord(note, true);
 }
 
+function readFolder() {
+  var notes = app();
+  var folder = findFolder(notes, input.folder, input.account);
+  if (!folder) {
+    throw new Error("FOLDER_NOT_FOUND");
+  }
+  var folderName = asText(safeRead(function () { return folder.name(); }, input.folder));
+  var accountName = asText(safeRead(function () { return folder.container().name(); }, input.account));
+  var folderNotes = safeRead(function () { return folder.notes(); }, []);
+  var results = [];
+  for (var i = 0; i < folderNotes.length; i += 1) {
+    var note = folderNotes[i];
+    results.push({
+      id: asText(safeRead(function () { return note.id(); }, undefined)),
+      title: asText(safeRead(function () { return note.name(); }, "Untitled")),
+      folder: folderName,
+      account: accountName,
+      createdAt: dateToIso(safeRead(function () { return note.creationDate(); }, undefined)),
+      updatedAt: dateToIso(safeRead(function () { return note.modificationDate(); }, undefined)),
+      body: asText(safeRead(function () { return note.plaintext(); }, "")) || ""
+    });
+  }
+  return results;
+}
+
 function createNote() {
   const notes = app();
   const note = notes.Note({
@@ -427,6 +457,8 @@ function run() {
       return searchTags();
     case "readNote":
       return readNote();
+    case "readFolder":
+      return readFolder();
     case "createNote":
       return createNote();
     case "appendNote":

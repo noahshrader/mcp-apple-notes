@@ -20,6 +20,11 @@ export const readNoteInputSchema = {
   id: z.string().trim().min(1).describe("Opaque Apple Notes note identifier.")
 };
 
+export const readFolderInputSchema = {
+  folder: z.string().trim().min(1).describe("Folder name to read all notes from."),
+  account: z.string().optional().describe("Account name to scope the folder lookup to.")
+};
+
 export const createNoteInputSchema = {
   title: z.string().trim().min(1).describe("Title for the new note."),
   body: z.string().trim().min(1).describe("Body content for the new note."),

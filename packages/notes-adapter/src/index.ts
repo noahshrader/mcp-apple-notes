@@ -37,6 +37,7 @@ export type {
   NotesErrorCode,
   NotesResult,
   RawNoteRecord,
+  ReadFolderInput,
   ReadNoteInput,
   ScriptExecutionRequest,
   ScriptExecutionResult,

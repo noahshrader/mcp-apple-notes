@@ -4,6 +4,7 @@ Commands:
   diagnostics
   search --query <text> [--folder <name>] [--account <name>] [--limit <n>]
   read --id <note-id>
+  read-folder --folder <name> [--account <name>]
   create-preview --title <title> --body <text> [--folder <name>] [--account <name>]
   create --title <title> --body <text> [--folder <name>] [--account <name>]
   append-preview --id <note-id> --content <text> [--separator <text>]

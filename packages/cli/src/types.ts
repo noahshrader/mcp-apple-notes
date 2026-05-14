@@ -5,13 +5,15 @@ import type {
   NoteSummary,
   NotesDiagnostics,
   NotesError,
-  NotesResult
+  NotesResult,
+  ReadFolderInput
 } from "@mcp-apple-notes/notes-adapter";
 
 export type CliCommand =
   | "diagnostics"
   | "search"
   | "read"
+  | "read-folder"
   | "create-preview"
   | "create"
   | "append-preview"
@@ -50,6 +52,7 @@ export type CliSuccessData =
   | NotesDiagnostics
   | NoteSummary[]
   | NoteContent
+  | NoteContent[]
   | CreateNoteResult
   | AppendNoteResult
   | undefined;
@@ -94,6 +97,7 @@ export type AdapterLike = {
     limit?: number;
   }): Promise<NotesResult<NoteSummary[]>>;
   readNote(input: { id: string }): Promise<NotesResult<NoteContent>>;
+  readFolder(input: ReadFolderInput): Promise<NotesResult<NoteContent[]>>;
   createNote(input: {
     title: string;
     body: string;

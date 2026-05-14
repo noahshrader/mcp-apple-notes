@@ -21,6 +21,7 @@ import {
   appendNoteInputSchema,
   createNoteInputSchema,
   diagnosticsInputSchema,
+  readFolderInputSchema,
   readNoteInputSchema,
   searchNotesInputSchema,
   searchTagsInputSchema
@@ -59,6 +60,20 @@ export function registerAppleNotesTools(
       inputSchema: readNoteInputSchema
     },
     async (input) => toSuccessOrError("note", await adapter.readNote(input))
+  );
+
+  server.registerTool(
+    "read_folder",
+    {
+      title: "Read Folder",
+      description: "Read the full plain-text body of every note in an Apple Notes folder in a single call. Returns an array of notes sorted by the order Apple Notes stores them. Suitable for bulk analysis without per-note round-trips.",
+      inputSchema: readFolderInputSchema
+    },
+    async (input) => {
+      const folderInput: { folder: string; account?: string } = { folder: input.folder };
+      if (input.account !== undefined) folderInput.account = input.account;
+      return toSuccessOrError("notes", await adapter.readFolder(folderInput));
+    }
   );
 
   server.registerTool(
@@ -120,10 +135,11 @@ function toSuccessOrError<T extends ToolValue>(
   return toNotesToolErrorResult(result.error);
 }
 
-type ToolPayloadKey = "results" | "note" | "result" | "diagnostics";
+type ToolPayloadKey = "results" | "note" | "notes" | "result" | "diagnostics";
 
 type ToolValue =
   | NoteSummary[]
+  | NoteContent[]
   | SearchTagsResult
   | NoteContent
   | CreateNoteResult

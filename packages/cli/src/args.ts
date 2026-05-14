@@ -5,6 +5,7 @@ const COMMANDS = new Set<CliCommand>([
   "diagnostics",
   "search",
   "read",
+  "read-folder",
   "create-preview",
   "create",
   "append-preview",
