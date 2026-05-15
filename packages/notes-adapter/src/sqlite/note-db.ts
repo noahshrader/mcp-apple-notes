@@ -16,7 +16,7 @@ import { readdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { parseNoteStoreProto, type ChecklistItem, type ParsedNoteData } from "./proto-parser.js";
-import type { NoteContent, NoteAttachment } from "../types.js";
+import type { NoteContent, NoteAttachment, NoteSummary, SearchNotesInput } from "../types.js";
 
 // ─── Paths ───────────────────────────────────────────────────────────────────
 
@@ -299,6 +299,7 @@ type NoteRow = {
   ZCREATIONDATE1: number | null;
   ZMODIFICATIONDATE1: number | null;
 };
+type SearchRow = NoteRow & { ZFOLDER: number | null; folderName: string | null };
 type ZdataRow = { ZNOTE: number; ZDATA: Buffer | Uint8Array | null };
 type TagRow = { ZNOTE1: number; ZALTTEXT: string };
 
@@ -436,6 +437,122 @@ export function getFolderNotes(folderName: string): NoteContent[] | null {
   }
 }
 
+/**
+ * Search notes directly from NoteStore.sqlite.
+ *
+ * This avoids JXA for the common case and is dramatically faster on large
+ * libraries. We currently support:
+ * - global searches with no account filter
+ * - folder-scoped searches when only `folder` is provided
+ *
+ * Returns `null` when the DB is unavailable or when the query shape requires a
+ * fallback to JXA (for example, account-scoped searches).
+ */
+export function searchSqliteNotes(input: SearchNotesInput = {}): NoteSummary[] | null {
+  if (input.account) {
+    return null;
+  }
+
+  if (input.folder) {
+    const notes = getFolderNotes(input.folder);
+    if (notes === null) return null;
+    return filterFolderNotes(notes, input.query, input.limit);
+  }
+
+  const db = openDb();
+  if (!db) return null;
+
+  try {
+    const meta = db.prepare("SELECT Z_UUID FROM Z_METADATA LIMIT 1").get() as MetaRow | undefined;
+    const storeUuid = meta?.Z_UUID ?? "";
+    const query = (input.query ?? "").trim().toLowerCase();
+    const limit = clampSearchLimit(input.limit);
+    const titleLike = `%${escapeLike(query)}%`;
+
+    const titleRows = db
+      .prepare(
+        `SELECT
+           n.Z_PK,
+           n.ZTITLE1,
+           n.ZCREATIONDATE1,
+           n.ZMODIFICATIONDATE1,
+           n.ZFOLDER,
+           f.ZTITLE2 AS folderName
+         FROM ZICCLOUDSYNCINGOBJECT n
+         LEFT JOIN ZICCLOUDSYNCINGOBJECT f ON f.Z_PK = n.ZFOLDER
+         WHERE n.Z_ENT = 12
+           AND (n.ZMARKEDFORDELETION = 0 OR n.ZMARKEDFORDELETION IS NULL)
+           AND (? = '' OR LOWER(COALESCE(n.ZTITLE1, '')) LIKE ? ESCAPE '\\')
+         ORDER BY n.ZMODIFICATIONDATE1 DESC
+         LIMIT ?`
+      )
+      .all(query, titleLike, limit) as SearchRow[];
+
+    const results = new Map<number, NoteSummary>();
+    for (const row of titleRows) {
+      results.set(row.Z_PK, searchSummaryFromRow(row, storeUuid));
+    }
+
+    if (!query || results.size >= limit) {
+      return Array.from(results.values()).slice(0, limit);
+    }
+
+    const bodyScanLimit = Math.max(limit * 30, 500);
+    const candidateRows = db
+      .prepare(
+        `SELECT
+           n.Z_PK,
+           n.ZTITLE1,
+           n.ZCREATIONDATE1,
+           n.ZMODIFICATIONDATE1,
+           n.ZFOLDER,
+           f.ZTITLE2 AS folderName
+         FROM ZICCLOUDSYNCINGOBJECT n
+         LEFT JOIN ZICCLOUDSYNCINGOBJECT f ON f.Z_PK = n.ZFOLDER
+         WHERE n.Z_ENT = 12
+           AND (n.ZMARKEDFORDELETION = 0 OR n.ZMARKEDFORDELETION IS NULL)
+         ORDER BY n.ZMODIFICATIONDATE1 DESC
+         LIMIT ?`
+      )
+      .all(bodyScanLimit) as SearchRow[];
+
+    const unmatchedRows = candidateRows.filter((row) => !results.has(row.Z_PK));
+    if (unmatchedRows.length === 0) {
+      return Array.from(results.values()).slice(0, limit);
+    }
+
+    const pks = unmatchedRows.map((row) => row.Z_PK);
+    const placeholders = pks.map(() => "?").join(",");
+    const zdataRows = db
+      .prepare(`SELECT ZNOTE, ZDATA FROM ZICNOTEDATA WHERE ZNOTE IN (${placeholders})`)
+      .all(...pks) as ZdataRow[];
+
+    const zdataByPk = new Map<number, Buffer | Uint8Array>();
+    for (const row of zdataRows) {
+      if (row.ZDATA) zdataByPk.set(row.ZNOTE, row.ZDATA);
+    }
+
+    for (const row of unmatchedRows) {
+      if (results.size >= limit) break;
+      const body = parsePlaintext(zdataByPk.get(row.Z_PK));
+      if (!body || !body.toLowerCase().includes(query)) {
+        continue;
+      }
+
+      results.set(row.Z_PK, {
+        ...searchSummaryFromRow(row, storeUuid),
+        excerpt: buildExcerpt(body),
+      });
+    }
+
+    return Array.from(results.values()).slice(0, limit);
+  } catch {
+    return null;
+  } finally {
+    try { db.close(); } catch { /* ignore */ }
+  }
+}
+
 // ─── Single-note fast path ────────────────────────────────────────────────────
 
 type SingleNoteRow = NoteRow & { ZFOLDER: number | null };
@@ -527,4 +644,68 @@ export function getSqliteNote(notePk: number): NoteContent | null {
   } finally {
     try { db.close(); } catch { /* ignore */ }
   }
+}
+
+function filterFolderNotes(
+  notes: NoteContent[],
+  rawQuery: string | undefined,
+  rawLimit: number | undefined,
+): NoteSummary[] {
+  const query = (rawQuery ?? "").trim().toLowerCase();
+  const limit = clampSearchLimit(rawLimit);
+  const filtered = query
+    ? notes.filter((note) =>
+      note.title.toLowerCase().includes(query) || note.body.toLowerCase().includes(query))
+    : notes;
+
+  return filtered.slice(0, limit).map((note) => ({
+    id: note.id,
+    title: note.title,
+    ...(note.folder ? { folder: note.folder } : {}),
+    ...(note.createdAt ? { createdAt: note.createdAt } : {}),
+    ...(note.updatedAt ? { updatedAt: note.updatedAt } : {}),
+    ...(note.body ? { excerpt: buildExcerpt(note.body) } : {}),
+  }));
+}
+
+function searchSummaryFromRow(row: SearchRow, storeUuid: string): NoteSummary {
+  return {
+    id: `x-coredata://${storeUuid}/ICNote/p${row.Z_PK}`,
+    title: row.ZTITLE1 ?? "(Untitled)",
+    ...(row.folderName ? { folder: row.folderName } : {}),
+    ...(cdateToIso(row.ZCREATIONDATE1) !== undefined && { createdAt: cdateToIso(row.ZCREATIONDATE1)! }),
+    ...(cdateToIso(row.ZMODIFICATIONDATE1) !== undefined && { updatedAt: cdateToIso(row.ZMODIFICATIONDATE1)! }),
+  };
+}
+
+function parsePlaintext(compressed: Buffer | Uint8Array | undefined): string {
+  if (!compressed) return "";
+
+  try {
+    const buf = Buffer.isBuffer(compressed)
+      ? compressed
+      : Buffer.from(compressed);
+    return parseNoteStoreProto(gunzipSync(buf)).text;
+  } catch {
+    return "";
+  }
+}
+
+function buildExcerpt(body: string, maxLength = 240): string {
+  const normalized = body.replace(/\s+/g, " ").trim();
+  if (normalized.length <= maxLength) {
+    return normalized;
+  }
+  return `${normalized.slice(0, maxLength - 1).trimEnd()}...`;
+}
+
+function clampSearchLimit(limit: number | undefined): number {
+  if (!Number.isFinite(limit) || !limit || limit <= 0) {
+    return 25;
+  }
+  return Math.min(Math.floor(limit), 100);
+}
+
+function escapeLike(value: string): string {
+  return value.replace(/[\\%_]/g, "\\$&");
 }

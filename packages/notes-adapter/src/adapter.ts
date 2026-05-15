@@ -22,7 +22,8 @@ import {
   getNoteAttachments,
   getNoteHashtags,
   getNoteParsedData,
-  getSqliteNote
+  getSqliteNote,
+  searchSqliteNotes
 } from "./sqlite/note-db.js";
 import type {
   AppendNoteInput,
@@ -61,10 +62,12 @@ type JxaFailure = {
 export class AppleNotesAdapter {
   private readonly runner: ScriptRunner;
   private readonly timeoutMs: number;
+  private readonly preferSqliteFastPath: boolean;
 
   constructor(options: AppleNotesAdapterOptions = {}) {
     this.runner = options.runner ?? runScript;
     this.timeoutMs = options.timeoutMs ?? DEFAULT_SCRIPT_TIMEOUT_MS;
+    this.preferSqliteFastPath = options.preferSqliteFastPath ?? true;
   }
 
   async searchNotes(input: SearchNotesInput = {}): Promise<NotesResult<NoteSummary[]>> {
@@ -73,6 +76,16 @@ export class AppleNotesAdapter {
       return validationError;
     }
 
+    // Fast path: search NoteStore.sqlite directly when possible.
+    // This avoids a full JXA walk across every note, which can time out on
+    // large libraries. We only use it with the default osascript runner so
+    // injected runners remain a reliable test seam.
+    if (this.preferSqliteFastPath && this.usesDefaultRunner()) {
+      const sqliteResults = searchSqliteNotes(input);
+      if (sqliteResults !== null) {
+        return { ok: true, value: sqliteResults };
+      }
+    }
     return this.capture(async () => {
       const payload = await this.runJxa<RawNoteRecord[]>(buildSearchNotesScript(input));
       return normalizeNotesSearchResults(payload);
@@ -87,17 +100,20 @@ export class AppleNotesAdapter {
 
     // Fast path: query NoteStore.sqlite directly (requires Full Disk Access).
     // getAllTagCounts returns null when the DB is not accessible, so we only
-    // bypass JXA when we can actually get the data.
-    const sqliteTags = getAllTagCounts(input.query, input.limit ?? 200);
-    if (sqliteTags !== null) {
-      return {
-        ok: true,
-        value: {
-          tags: sqliteTags.map((t) => ({ name: t.tag, count: t.count })),
-          scannedNoteCount: sqliteTags.length,
-          truncated: false
-        }
-      };
+    // bypass JXA when we can actually get the data. Keep injected runners on
+    // the fallback path so tests can still exercise the script boundary.
+    if (this.preferSqliteFastPath && this.usesDefaultRunner()) {
+      const sqliteTags = getAllTagCounts(input.query, input.limit ?? 200);
+      if (sqliteTags !== null) {
+        return {
+          ok: true,
+          value: {
+            tags: sqliteTags.map((t) => ({ name: t.tag, count: t.count })),
+            scannedNoteCount: sqliteTags.length,
+            truncated: false
+          }
+        };
+      }
     }
 
     // Fallback: JXA text scan (slower, no Full Disk Access required).
@@ -113,11 +129,13 @@ export class AppleNotesAdapter {
     }
 
     // Fast path: read body, checklists, and tags from SQLite in one DB open.
-    const pk = extractNotePkFromId(input.id);
-    if (pk !== null) {
-      const sqliteNote = getSqliteNote(pk);
-      if (sqliteNote !== null) {
-        return { ok: true, value: sqliteNote };
+    if (this.preferSqliteFastPath) {
+      const pk = extractNotePkFromId(input.id);
+      if (pk !== null) {
+        const sqliteNote = getSqliteNote(pk);
+        if (sqliteNote !== null) {
+          return { ok: true, value: sqliteNote };
+        }
       }
     }
 
@@ -137,9 +155,11 @@ export class AppleNotesAdapter {
     // Fast path: read everything — body text, checklists, and tags — directly
     // from NoteStore.sqlite in a single DB open (no JXA, no AppleScript bridge).
     // Returns null when FDA is unavailable or the folder cannot be found.
-    const sqliteNotes = getFolderNotes(input.folder);
-    if (sqliteNotes !== null) {
-      return { ok: true, value: sqliteNotes };
+    if (this.preferSqliteFastPath) {
+      const sqliteNotes = getFolderNotes(input.folder);
+      if (sqliteNotes !== null) {
+        return { ok: true, value: sqliteNotes };
+      }
     }
 
     // Fallback: JXA + per-note SQLite enrichment (no FDA or folder name mismatch).
@@ -262,6 +282,10 @@ export class AppleNotesAdapter {
       runner: this.runner,
       timeoutMs: this.timeoutMs
     });
+  }
+
+  private usesDefaultRunner(): boolean {
+    return this.runner === runScript;
   }
 
   private async runJxa<T>(script: string): Promise<T> {

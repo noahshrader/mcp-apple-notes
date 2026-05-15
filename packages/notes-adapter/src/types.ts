@@ -206,4 +206,5 @@ export type ScriptRunner = (
 export type AppleNotesAdapterOptions = {
   runner?: ScriptRunner;
   timeoutMs?: number;
+  preferSqliteFastPath?: boolean;
 };
