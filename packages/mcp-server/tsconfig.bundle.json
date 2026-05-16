@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "declaration": true,
+    "declarationMap": false,
+    "outDir": "./dist",
+    "rootDir": ".."
+  },
+  "include": [
+    "src/**/*.ts",
+    "../notes-adapter/src/**/*.ts",
+    "../note-sync/src/**/*.ts"
+  ]
+}
