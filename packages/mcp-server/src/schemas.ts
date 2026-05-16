@@ -42,37 +42,37 @@ export const appendNoteInputSchema = {
 
 export const diagnosticsInputSchema = {};
 
-// ─── Planner sync schemas ──────────────────────────────────────────────────────
+// ─── Note sync schemas ──────────────────────────────────────────────────────
 
-export const plannerSyncInputSchema = {
+export const noteSyncInputSchema = {
   folder_names: z
     .array(z.string().trim().min(1))
     .min(1)
     .describe(
-      "Apple Notes folder names to sync (e.g. [\"Planner\", \"2025\", \"2026\"]). " +
-      "Use year-named folders for past years and the main planner folder for the current year.",
+      "Apple Notes folder names to sync (e.g. [\"Journal\", \"Projects\", \"2025\", \"2026\"]). " +
+      "Any folder in Apple Notes can be indexed.",
     ),
   cache_dir: z
     .string()
     .optional()
     .describe(
       "Directory where entries.json and status.json are persisted. " +
-      "Defaults to ~/.mcp-apple-notes/planner-cache.",
+      "Defaults to ~/.mcp-apple-notes/note-cache.",
     ),
 };
 
-export const plannerListEntriesInputSchema = {
+export const noteListInputSchema = {
   year: z.string().regex(/^20\d{2}$/).optional().describe("Filter entries by 4-digit year (e.g. \"2026\")."),
-  cache_dir: z.string().optional().describe("Cache directory. Defaults to ~/.mcp-apple-notes/planner-cache."),
+  cache_dir: z.string().optional().describe("Cache directory. Defaults to ~/.mcp-apple-notes/note-cache."),
 };
 
-export const plannerGetEntryInputSchema = {
-  note_id: z.string().trim().min(1).describe("The noteId (x-coredata:// URI) of the planner entry to retrieve."),
-  cache_dir: z.string().optional().describe("Cache directory. Defaults to ~/.mcp-apple-notes/planner-cache."),
+export const noteGetInputSchema = {
+  note_id: z.string().trim().min(1).describe("The noteId (x-coredata:// URI) of the cached note entry to retrieve."),
+  cache_dir: z.string().optional().describe("Cache directory. Defaults to ~/.mcp-apple-notes/note-cache."),
 };
 
-export const plannerStatusInputSchema = {
-  cache_dir: z.string().optional().describe("Cache directory. Defaults to ~/.mcp-apple-notes/planner-cache."),
+export const noteStatusInputSchema = {
+  cache_dir: z.string().optional().describe("Cache directory. Defaults to ~/.mcp-apple-notes/note-cache."),
 };
 
 export const notesToolInputSchemas = {

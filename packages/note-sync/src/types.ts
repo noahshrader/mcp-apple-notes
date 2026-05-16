@@ -1,19 +1,19 @@
 // ─── Checklist item / section ─────────────────────────────────────────────────
 
-export interface PlannerChecklistItem {
+export interface NoteChecklistItem {
   text: string
   checked: boolean
 }
 
-export interface PlannerChecklist {
+export interface NoteChecklist {
   /** Section heading (e.g. "Habits", "Morning"), or null for top-level items. */
   heading: string | null
-  items: PlannerChecklistItem[]
+  items: NoteChecklistItem[]
 }
 
 // ─── Attachments ──────────────────────────────────────────────────────────────
 
-export interface PlannerAttachment {
+export interface NoteAttachment {
   identifier: string
   typeUti: string
   /** Full-resolution local path (only present when iCloud has downloaded it). */
@@ -26,7 +26,7 @@ export interface PlannerAttachment {
 
 // ─── Planner entry ────────────────────────────────────────────────────────────
 
-export interface PlannerEntry {
+export interface NoteEntry {
   /** Stable 16-char ID derived from noteId. */
   id: string
   /** x-coredata:// URI — stable Apple Notes reference. */
@@ -38,10 +38,10 @@ export interface PlannerEntry {
   bodyText: string
   /** First 280 characters of bodyText, whitespace-normalised. */
   bodyPreview: string
-  checklists: PlannerChecklist[]
+  checklists: NoteChecklist[]
   /** Items from the first "Habits" checklist section. */
-  habits: PlannerChecklistItem[]
-  attachments: PlannerAttachment[]
+  habits: NoteChecklistItem[]
+  attachments: NoteAttachment[]
   /** SHA-256(title + body + updatedAt) used to skip unchanged notes. */
   contentHash: string
   lastSyncedAt: string
@@ -49,7 +49,7 @@ export interface PlannerEntry {
 
 // ─── Sync I/O ─────────────────────────────────────────────────────────────────
 
-export interface PlannerSyncStatus {
+export interface NoteSyncStatus {
   lastSyncedAt: string | null
   entryCount: number
   errorCount: number
@@ -57,7 +57,7 @@ export interface PlannerSyncStatus {
   errors: string[]
 }
 
-export interface PlannerSyncResult {
+export interface NoteSyncResult {
   synced: number
   skipped: number
   failed: number
@@ -65,7 +65,7 @@ export interface PlannerSyncResult {
   durationMs: number
 }
 
-export interface PlannerSyncOptions {
+export interface NoteSyncOptions {
   /**
    * Absolute path of the directory where `entries.json` and `status.json`
    * are persisted.  Created automatically if it does not exist.

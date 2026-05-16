@@ -2,8 +2,8 @@
  * Planner sync core — no Electron dependencies.
  *
  * Storage layout (under the caller-supplied `cacheDir`):
- *   entries.json   — Record<noteId, PlannerEntry>
- *   status.json    — PlannerSyncStatus
+ *   entries.json   — Record<noteId, NoteEntry>
+ *   status.json    — NoteSyncStatus
  */
 
 import { createHash } from "node:crypto";
@@ -13,22 +13,22 @@ import { homedir } from "node:os";
 import { getFolderNotes } from "@mcp-apple-notes/notes-adapter";
 import type { NoteContent } from "@mcp-apple-notes/notes-adapter";
 import {
-  extractPlannerChecklists,
+  extractNoteChecklists,
   extractHabitsChecklist,
 } from "./checklist.js";
 import type {
-  PlannerEntry,
-  PlannerSyncOptions,
-  PlannerSyncResult,
-  PlannerSyncStatus,
+  NoteEntry,
+  NoteSyncOptions,
+  NoteSyncResult,
+  NoteSyncStatus,
 } from "./types.js";
 
 // ─── Default cache location ───────────────────────────────────────────────────
 
-export const DEFAULT_CACHE_DIR = join(
+export const DEFAULT_NOTE_CACHE_DIR = join(
   homedir(),
   ".mcp-apple-notes",
-  "planner-cache",
+  "note-cache",
 );
 
 // ─── Persistence ──────────────────────────────────────────────────────────────
@@ -37,22 +37,22 @@ function ensureDir(dir: string): void {
   mkdirSync(dir, { recursive: true });
 }
 
-export function loadEntries(cacheDir: string): Record<string, PlannerEntry> {
+export function loadEntries(cacheDir: string): Record<string, NoteEntry> {
   try {
     const raw = readFileSync(join(cacheDir, "entries.json"), "utf-8");
-    return JSON.parse(raw) as Record<string, PlannerEntry>;
+    return JSON.parse(raw) as Record<string, NoteEntry>;
   } catch {
     return {};
   }
 }
 
-export function loadEntriesList(cacheDir: string): PlannerEntry[] {
+export function loadNoteEntries(cacheDir: string): NoteEntry[] {
   return Object.values(loadEntries(cacheDir));
 }
 
 function saveEntries(
   cacheDir: string,
-  entries: Record<string, PlannerEntry>,
+  entries: Record<string, NoteEntry>,
 ): void {
   ensureDir(cacheDir);
   writeFileSync(
@@ -62,16 +62,16 @@ function saveEntries(
   );
 }
 
-export function loadStatus(cacheDir: string): PlannerSyncStatus {
+export function loadNoteSyncStatus(cacheDir: string): NoteSyncStatus {
   try {
     const raw = readFileSync(join(cacheDir, "status.json"), "utf-8");
-    return JSON.parse(raw) as PlannerSyncStatus;
+    return JSON.parse(raw) as NoteSyncStatus;
   } catch {
     return { lastSyncedAt: null, entryCount: 0, errorCount: 0, errors: [] };
   }
 }
 
-function saveStatus(cacheDir: string, status: PlannerSyncStatus): void {
+function saveStatus(cacheDir: string, status: NoteSyncStatus): void {
   ensureDir(cacheDir);
   writeFileSync(
     join(cacheDir, "status.json"),
@@ -103,9 +103,9 @@ function extractYear(folderName: string, noteTitle: string): string {
   return String(new Date().getFullYear());
 }
 
-function normalizeEntry(note: NoteContent, folderName: string): PlannerEntry {
+function normalizeEntry(note: NoteContent, folderName: string): NoteEntry {
   const structuredChecklists = note.structured?.checklists ?? [];
-  const checklists = extractPlannerChecklists(note.body, structuredChecklists);
+  const checklists = extractNoteChecklists(note.body, structuredChecklists);
   const habits = extractHabitsChecklist(checklists);
 
   const attachments = (note.structured?.attachments ?? []).map((att) => ({
@@ -139,11 +139,11 @@ function normalizeEntry(note: NoteContent, folderName: string): PlannerEntry {
 
 /**
  * Read the specified Apple Notes folders, normalise each note into a
- * PlannerEntry, skip unchanged notes, and persist the result.
+ * NoteEntry, skip unchanged notes, and persist the result.
  */
-export async function runPlannerSync(
-  options: PlannerSyncOptions,
-): Promise<PlannerSyncResult> {
+export async function runNoteSync(
+  options: NoteSyncOptions,
+): Promise<NoteSyncResult> {
   const { cacheDir, folders } = options;
   const startMs = Date.now();
   const stored = loadEntries(cacheDir);
@@ -198,7 +198,7 @@ export async function runPlannerSync(
 
   saveEntries(cacheDir, stored);
 
-  const status: PlannerSyncStatus = {
+  const status: NoteSyncStatus = {
     lastSyncedAt: new Date().toISOString(),
     entryCount: Object.keys(stored).length,
     errorCount: errors.length,

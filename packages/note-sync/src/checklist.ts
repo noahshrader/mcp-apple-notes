@@ -1,7 +1,7 @@
 /**
  * Planner checklist extraction.
  *
- * Parses a note body (plain text) into PlannerChecklist sections using
+ * Parses a note body (plain text) into NoteChecklist sections using
  * structured checklist data from NoteStore.sqlite to resolve accurate
  * checked/unchecked state where available.
  *
@@ -11,7 +11,7 @@
  *   ✓           — check mark (treated as checked)
  */
 
-import type { PlannerChecklist, PlannerChecklistItem } from "./types.js";
+import type { NoteChecklist, NoteChecklistItem } from "./types.js";
 
 /** Minimal structured checklist item from the notes adapter. */
 export interface StructuredChecklistItem {
@@ -65,10 +65,10 @@ function isHeadingLine(line: string, structuredTexts: Set<string>): boolean {
  * @param body            Plain-text note body.
  * @param structuredItems Checklist items from NoteStore.sqlite (accurate done state).
  */
-export function extractPlannerChecklists(
+export function extractNoteChecklists(
   body: string,
   structuredItems: StructuredChecklistItem[],
-): PlannerChecklist[] {
+): NoteChecklist[] {
   const structuredMap = new Map<string, boolean>();
   const structuredTexts = new Set<string>();
   for (const item of structuredItems) {
@@ -80,9 +80,9 @@ export function extractPlannerChecklists(
   }
 
   const lines = body.split("\n");
-  const sections: PlannerChecklist[] = [];
+  const sections: NoteChecklist[] = [];
   let currentHeading: string | null = null;
-  let currentItems: PlannerChecklistItem[] = [];
+  let currentItems: NoteChecklistItem[] = [];
 
   function flush(): void {
     if (currentItems.length > 0) {
@@ -127,8 +127,8 @@ export function extractPlannerChecklists(
  * Returns an empty array when no Habits section is found.
  */
 export function extractHabitsChecklist(
-  checklists: PlannerChecklist[],
-): PlannerChecklistItem[] {
+  checklists: NoteChecklist[],
+): NoteChecklistItem[] {
   const section = checklists.find(
     (c) => c.heading !== null && /habits/i.test(c.heading),
   );
