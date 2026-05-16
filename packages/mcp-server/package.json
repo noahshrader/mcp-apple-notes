@@ -1,6 +1,6 @@
 {
   "name": "@noahshrader/mcp-apple-notes",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "private": false,
   "description": "MCP server for Apple Notes — search, read, create, append, and sync notes via the Model Context Protocol.",
   "license": "MIT",

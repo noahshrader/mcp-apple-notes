@@ -38,6 +38,12 @@ export default defineConfig([
     dts: { only: false },
     tsconfig: "tsconfig.bundle.json",
     external: [],
+    onSuccess: async () => {
+      const outFile = "dist/notes-adapter.js";
+      const content = readFileSync(outFile, "utf8");
+      const fixed = content.replace(/from "sqlite"/g, 'from "node:sqlite"');
+      writeFileSync(outFile, fixed);
+    },
   },
   // note-sync sub-path export for programmatic consumers (e.g. Electron)
   {
@@ -50,5 +56,11 @@ export default defineConfig([
     dts: { only: false },
     tsconfig: "tsconfig.bundle.json",
     external: [],
+    onSuccess: async () => {
+      const outFile = "dist/note-sync.js";
+      const content = readFileSync(outFile, "utf8");
+      const fixed = content.replace(/from "sqlite"/g, 'from "node:sqlite"');
+      writeFileSync(outFile, fixed);
+    },
   },
 ]);
