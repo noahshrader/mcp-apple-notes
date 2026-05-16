@@ -1,21 +1,21 @@
-#!/usr/bin/env node
-
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { notesAdapterPackage } from "@mcp-apple-notes/notes-adapter";
 import { fileURLToPath } from "node:url";
 import { registerAppleNotesTools } from "./tools.js";
 
+if (process.platform !== "darwin") {
+  process.stderr.write(
+    "@noahshrader/mcp-apple-notes requires macOS and Apple Notes.\n"
+  );
+  process.exit(1);
+}
+
 const MCP_SERVER_NAME = "mcp-apple-notes";
-const MCP_SERVER_VERSION = "0.1.0";
+const MCP_SERVER_VERSION = "1.0.0";
 
 export const mcpServerPackage = {
-  name: "@mcp-apple-notes/mcp-server",
-  phase: "tools-defined",
+  name: MCP_SERVER_NAME,
   version: MCP_SERVER_VERSION,
-  dependencies: [
-    notesAdapterPackage.name
-  ]
 } as const;
 
 export function createMcpServer(): McpServer {

@@ -15,9 +15,6 @@
     },
     {
       "path": "../note-sync"
-    },
-    {
-      "path": "../storage"
     }
   ],
   "include": [

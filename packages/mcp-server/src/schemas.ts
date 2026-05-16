@@ -75,11 +75,3 @@ export const noteStatusInputSchema = {
   cache_dir: z.string().optional().describe("Cache directory. Defaults to ~/.mcp-apple-notes/note-cache."),
 };
 
-export const notesToolInputSchemas = {
-  searchNotes: searchNotesInputSchema,
-  searchTags: searchTagsInputSchema,
-  readNote: readNoteInputSchema,
-  createNote: createNoteInputSchema,
-  appendNote: appendNoteInputSchema,
-  diagnostics: diagnosticsInputSchema
-} as const;

@@ -8,16 +8,11 @@ import {
 import type {
   AppleNotesAdapter,
   AppendNoteResult,
-  AppendNoteInput,
   CreateNoteResult,
-  CreateNoteInput,
   NoteContent,
   NoteSummary,
   NotesDiagnostics,
-  NotesError,
   NotesResult,
-  SearchNotesInput,
-  SearchTagsInput,
   SearchTagsResult
 } from "@mcp-apple-notes/notes-adapter";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
@@ -50,7 +45,7 @@ export function registerAppleNotesTools(
       inputSchema: searchNotesInputSchema
     },
     async (input) =>
-      toSuccessOrError("results", await adapter.searchNotes(toSearchNotesInput(input)))
+      toSuccessOrError("results", await adapter.searchNotes(input))
   );
 
   server.registerTool(
@@ -60,7 +55,7 @@ export function registerAppleNotesTools(
       description: "Search hashtags used in Apple Notes. When Full Disk Access is granted, uses a fast direct SQLite query returning all tags with occurrence counts. Falls back to a JXA body-text scan when Full Disk Access is unavailable.",
       inputSchema: searchTagsInputSchema
     },
-    async (input) => toSuccessOrError("result", await adapter.searchTags(toSearchTagsInput(input)))
+    async (input) => toSuccessOrError("result", await adapter.searchTags(input))
   );
 
   server.registerTool(
@@ -80,11 +75,8 @@ export function registerAppleNotesTools(
       description: "Read the full plain-text body of every note in an Apple Notes folder in a single call. Returns an array of notes sorted by the order Apple Notes stores them. When Full Disk Access is granted, each note includes a `structured` field with `checklists` (items with `text` and `done`) and `tags` (hashtags). Suitable for bulk analysis without per-note round-trips.",
       inputSchema: readFolderInputSchema
     },
-    async (input) => {
-      const folderInput: { folder: string; account?: string } = { folder: input.folder };
-      if (input.account !== undefined) folderInput.account = input.account;
-      return toSuccessOrError("notes", await adapter.readFolder(folderInput));
-    }
+    async (input) =>
+      toSuccessOrError("notes", await adapter.readFolder(input))
   );
 
   server.registerTool(
@@ -95,7 +87,7 @@ export function registerAppleNotesTools(
       inputSchema: createNoteInputSchema
     },
     async (input) =>
-      toSuccessOrError("result", await adapter.createNote(toCreateNoteInput(input)))
+      toSuccessOrError("result", await adapter.createNote(input))
   );
 
   server.registerTool(
@@ -106,7 +98,7 @@ export function registerAppleNotesTools(
       inputSchema: appendNoteInputSchema
     },
     async (input) =>
-      toSuccessOrError("result", await adapter.appendToNote(toAppendNoteInput(input)))
+      toSuccessOrError("result", await adapter.appendToNote(input))
   );
 
   server.registerTool(
@@ -161,120 +153,7 @@ type ToolSuccessPayload<T extends ToolValue> = {
   ok: true;
 } & Record<ToolPayloadKey, T | undefined>;
 
-function toSearchNotesInput(input: {
-  query?: string | undefined;
-  folder?: string | undefined;
-  account?: string | undefined;
-  limit?: number | undefined;
-}): SearchNotesInput {
-  const normalized: SearchNotesInput = {};
-
-  if (input.query !== undefined) {
-    normalized.query = input.query;
-  }
-
-  if (input.folder !== undefined) {
-    normalized.folder = input.folder;
-  }
-
-  if (input.account !== undefined) {
-    normalized.account = input.account;
-  }
-
-  if (input.limit !== undefined) {
-    normalized.limit = input.limit;
-  }
-
-  return normalized;
-}
-
-function toSearchTagsInput(input: {
-  query?: string | undefined;
-  folder?: string | undefined;
-  account?: string | undefined;
-  limit?: number | undefined;
-  maxNotes?: number | undefined;
-  timeBudgetMs?: number | undefined;
-}): SearchTagsInput {
-  const normalized: SearchTagsInput = {};
-
-  if (input.query !== undefined) {
-    normalized.query = input.query;
-  }
-
-  if (input.folder !== undefined) {
-    normalized.folder = input.folder;
-  }
-
-  if (input.account !== undefined) {
-    normalized.account = input.account;
-  }
-
-  if (input.limit !== undefined) {
-    normalized.limit = input.limit;
-  }
-
-  if (input.maxNotes !== undefined) {
-    normalized.maxNotes = input.maxNotes;
-  }
-
-  if (input.timeBudgetMs !== undefined) {
-    normalized.timeBudgetMs = input.timeBudgetMs;
-  }
-
-  return normalized;
-}
-
-function toCreateNoteInput(input: {
-  title: string;
-  body: string;
-  folder?: string | undefined;
-  account?: string | undefined;
-  dryRun?: boolean | undefined;
-}): CreateNoteInput {
-  const normalized: CreateNoteInput = {
-    title: input.title,
-    body: input.body
-  };
-
-  if (input.folder !== undefined) {
-    normalized.folder = input.folder;
-  }
-
-  if (input.account !== undefined) {
-    normalized.account = input.account;
-  }
-
-  if (input.dryRun !== undefined) {
-    normalized.dryRun = input.dryRun;
-  }
-
-  return normalized;
-}
-
-function toAppendNoteInput(input: {
-  id: string;
-  content: string;
-  separator?: string | undefined;
-  dryRun?: boolean | undefined;
-}): AppendNoteInput {
-  const normalized: AppendNoteInput = {
-    id: input.id,
-    content: input.content
-  };
-
-  if (input.separator !== undefined) {
-    normalized.separator = input.separator;
-  }
-
-  if (input.dryRun !== undefined) {
-    normalized.dryRun = input.dryRun;
-  }
-
-  return normalized;
-}
-
-// ─── Planner sync tools ────────────────────────────────────────────────────────
+// ─── Note sync tools ──────────────────────────────────────────────────────────
 
 function registerNoteSyncTools(server: McpServer): void {
   server.registerTool(

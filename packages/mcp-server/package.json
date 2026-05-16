@@ -1,13 +1,13 @@
 {
-  "name": "@mcp-apple-notes/mcp-server",
-  "version": "0.1.0",
+  "name": "@noahshrader/mcp-apple-notes",
+  "version": "1.0.0",
   "private": false,
-  "description": "MCP server boundary for Apple Notes capabilities.",
+  "description": "MCP server for Apple Notes — search, read, create, append, and sync notes via the Model Context Protocol.",
   "license": "MIT",
   "author": "Noah Shrader <noahshrader@gmail.com> (https://github.com/noahshrader)",
   "repository": {
     "type": "git",
-    "url": "https://github.com/noahshrader/mcp-apple-notes.git",
+    "url": "git+https://github.com/noahshrader/mcp-apple-notes.git",
     "directory": "packages/mcp-server"
   },
   "homepage": "https://github.com/noahshrader/mcp-apple-notes#readme",
@@ -23,21 +23,29 @@
     "mcp-apple-notes": "./dist/index.js"
   },
   "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     }
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "build": "tsc -b",
-    "clean": "tsc -b --clean"
+    "build": "tsup",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build"
+  },
+  "engines": {
+    "node": ">=22.5"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
-    "@mcp-apple-notes/notes-adapter": "0.1.0",
-    "@mcp-apple-notes/note-sync": "0.1.0",
     "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.0"
   }
 }
