@@ -3,6 +3,7 @@ import type {
   CreateNoteInput,
   ReadFolderInput,
   ReadNoteInput,
+  ReplaceNoteInput,
   SearchNotesInput,
   SearchTagsInput
 } from "../types.js";
@@ -29,6 +30,10 @@ export function buildCreateNoteScript(input: CreateNoteInput): string {
 
 export function buildAppendNoteScript(input: AppendNoteInput): string {
   return wrapJxa("appendNote", input);
+}
+
+export function buildReplaceNoteScript(input: ReplaceNoteInput): string {
+  return wrapJxa("replaceNote", input);
 }
 
 export function buildDiagnosticsScript(): string {
@@ -444,6 +449,21 @@ function appendNote() {
   return noteRecord(note, true);
 }
 
+function replaceNote() {
+  const notes = app();
+  const note = findNoteById(notes, input.id);
+  if (!note) {
+    throw new Error("NOTE_NOT_FOUND");
+  }
+
+  note.body = String(input.body || "");
+  if (input.title) {
+    note.name = String(input.title);
+  }
+
+  return noteRecord(note, true);
+}
+
 function diagnostics() {
   const notes = app();
   return {
@@ -465,6 +485,8 @@ function run() {
       return createNote();
     case "appendNote":
       return appendNote();
+    case "replaceNote":
+      return replaceNote();
     case "diagnostics":
       return diagnostics();
     default:

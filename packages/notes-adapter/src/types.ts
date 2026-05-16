@@ -1,3 +1,5 @@
+import type { NoteBlock } from "./formatting/note-html.js";
+
 export type NotesErrorCode =
   | "NOTES_PERMISSION_DENIED"
   | "NOTES_APP_UNAVAILABLE"
@@ -157,8 +159,15 @@ export type AppendNoteInput = {
   dryRun?: boolean;
 };
 
+export type ReplaceNoteInput = {
+  id: string;
+  body: string;
+  title?: string;
+  dryRun?: boolean;
+};
+
 export type MutationPreview = {
-  operation: "create" | "append";
+  operation: "create" | "append" | "replace";
   target?: NoteReference;
   proposedTitle?: string;
   proposedBody?: string;
@@ -172,6 +181,12 @@ export type CreateNoteResult = {
 };
 
 export type AppendNoteResult = {
+  dryRun: boolean;
+  preview?: MutationPreview;
+  note?: NoteContent;
+};
+
+export type ReplaceNoteResult = {
   dryRun: boolean;
   preview?: MutationPreview;
   note?: NoteContent;

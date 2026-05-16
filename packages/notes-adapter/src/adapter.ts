@@ -3,11 +3,13 @@ import { firstJsonLine } from "./execution/parse-output.js";
 import { runScript } from "./execution/run-script.js";
 import { DEFAULT_SCRIPT_TIMEOUT_MS } from "./execution/timeouts.js";
 import { runAppleNotesDiagnostics } from "./diagnostics.js";
+import { buildAppleNotesHtml } from "./formatting/note-html.js";
 import {
   buildAppendNoteScript,
   buildCreateNoteScript,
   buildReadFolderScript,
   buildReadNoteScript,
+  buildReplaceNoteScript,
   buildSearchNotesScript,
   buildSearchTagsScript
 } from "./scripts/jxa.js";
@@ -39,6 +41,8 @@ import type {
   RawNoteRecord,
   ReadFolderInput,
   ReadNoteInput,
+  ReplaceNoteInput,
+  ReplaceNoteResult,
   ScriptRunner,
   SearchNotesInput,
   SearchTagsInput,
@@ -277,6 +281,49 @@ export class AppleNotesAdapter {
     });
   }
 
+  async replaceNote(input: ReplaceNoteInput): Promise<NotesResult<ReplaceNoteResult>> {
+    const validationError =
+      validateRequiredString<ReplaceNoteResult>(input.id, "id") ??
+      validateRequiredString<ReplaceNoteResult>(input.body, "body");
+
+    if (validationError !== undefined) {
+      return validationError;
+    }
+
+    if (input.dryRun === true) {
+      const existing = await this.readNote({ id: input.id });
+      if (!existing.ok) {
+        return existing;
+      }
+
+      const preview: MutationPreview = {
+        operation: "replace",
+        target: {
+          id: existing.value.id,
+          title: existing.value.title
+        },
+        proposedBody: input.body,
+        warnings: mutationWarnings(input)
+      };
+
+      return {
+        ok: true,
+        value: {
+          dryRun: true,
+          preview
+        }
+      };
+    }
+
+    return this.capture(async () => {
+      const payload = await this.runJxa<RawNoteRecord>(buildReplaceNoteScript(input));
+      return {
+        dryRun: false,
+        note: normalizeNoteContent(payload)
+      };
+    });
+  }
+
   async diagnostics(): Promise<NotesResult<NotesDiagnostics>> {
     return runAppleNotesDiagnostics({
       runner: this.runner,
@@ -417,7 +464,7 @@ function validateRequiredString<T>(
   return undefined;
 }
 
-function mutationWarnings(input: CreateNoteInput | AppendNoteInput): string[] {
+function mutationWarnings(input: CreateNoteInput | AppendNoteInput | ReplaceNoteInput): string[] {
   const warnings: string[] = [];
 
   if ("body" in input && input.body.trim().length === 0) {
@@ -430,3 +477,5 @@ function mutationWarnings(input: CreateNoteInput | AppendNoteInput): string[] {
 
   return warnings;
 }
+
+

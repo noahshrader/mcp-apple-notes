@@ -190,8 +190,16 @@ function renderBlock(block: NoteBlock): string {
     case "subheading":
       return `<h3>${esc(block.text)}</h3>`;
 
-    case "body":
+    case "body": {
+      const trimmed = block.text.trim();
+      if (!trimmed) {
+        return "<div><br></div>";
+      }
+      if (/^https?:\/\/\S+$/i.test(trimmed)) {
+        return `<div><a href="${esc(trimmed)}">${esc(trimmed)}</a></div>`;
+      }
       return `<div>${esc(block.text)}</div>`;
+    }
 
     case "monospace":
       // <tt> maps to Apple Notes style_type 4 (monospaced) without the
