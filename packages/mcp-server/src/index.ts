@@ -29,7 +29,7 @@ export function createMcpServer(): McpServer {
         tools: {}
       },
       instructions:
-        "Apple Notes MCP server exposing search, read, create, append, and diagnostics tools over stdio."
+        "Apple Notes MCP server exposing search, read, create, append, diagnostics, and planner-sync tools over stdio."
     }
   );
 

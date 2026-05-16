@@ -5,6 +5,9 @@
       "path": "./packages/notes-adapter"
     },
     {
+      "path": "./packages/planner-sync"
+    },
+    {
       "path": "./packages/storage"
     },
     {

@@ -1,24 +1,16 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "types": ["node"],
     "composite": true,
     "declaration": true,
     "declarationMap": true,
+    "types": ["node"],
     "outDir": "./dist",
     "rootDir": "./src",
     "tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo"
   },
   "references": [
-    {
-      "path": "../notes-adapter"
-    },
-    {
-      "path": "../planner-sync"
-    },
-    {
-      "path": "../storage"
-    }
+    { "path": "../notes-adapter" }
   ],
   "include": [
     "src/**/*.ts"

@@ -1,27 +1,24 @@
 {
-  "name": "@mcp-apple-notes/mcp-server",
+  "name": "@mcp-apple-notes/planner-sync",
   "version": "0.1.0",
   "private": false,
-  "description": "MCP server boundary for Apple Notes capabilities.",
+  "description": "Planner sync core for Apple Notes — reads Notes folders, extracts checklists, and persists entries to a local JSON cache.",
   "license": "MIT",
   "author": "Noah Shrader <noahshrader@gmail.com> (https://github.com/noahshrader)",
   "repository": {
     "type": "git",
     "url": "https://github.com/noahshrader/mcp-apple-notes.git",
-    "directory": "packages/mcp-server"
+    "directory": "packages/planner-sync"
   },
   "homepage": "https://github.com/noahshrader/mcp-apple-notes#readme",
   "keywords": [
     "mcp",
     "apple-notes",
     "macos",
-    "automation",
-    "server"
+    "planner",
+    "sync"
   ],
   "type": "module",
-  "bin": {
-    "mcp-apple-notes": "./dist/index.js"
-  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -35,9 +32,9 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
-    "@mcp-apple-notes/notes-adapter": "0.1.0",
-    "@mcp-apple-notes/planner-sync": "0.1.0",
-    "zod": "^4.1.12"
+    "@mcp-apple-notes/notes-adapter": "0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.7.0"
   }
 }

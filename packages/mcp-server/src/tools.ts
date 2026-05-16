@@ -1,4 +1,10 @@
 import { createAppleNotesAdapter } from "@mcp-apple-notes/notes-adapter";
+import {
+  DEFAULT_CACHE_DIR,
+  loadEntriesList,
+  loadStatus,
+  runPlannerSync,
+} from "@mcp-apple-notes/planner-sync";
 import type {
   AppleNotesAdapter,
   AppendNoteResult,
@@ -21,16 +27,21 @@ import {
   appendNoteInputSchema,
   createNoteInputSchema,
   diagnosticsInputSchema,
+  plannerGetEntryInputSchema,
+  plannerListEntriesInputSchema,
+  plannerStatusInputSchema,
+  plannerSyncInputSchema,
   readFolderInputSchema,
   readNoteInputSchema,
   searchNotesInputSchema,
-  searchTagsInputSchema
+  searchTagsInputSchema,
 } from "./schemas.js";
 
 export function registerAppleNotesTools(
   server: McpServer,
   adapter: AppleNotesAdapter = createAppleNotesAdapter()
 ): McpServer {
+  registerPlannerSyncTools(server);
   server.registerTool(
     "search_notes",
     {
@@ -261,4 +272,93 @@ function toAppendNoteInput(input: {
   }
 
   return normalized;
+}
+
+// ─── Planner sync tools ────────────────────────────────────────────────────────
+
+function registerPlannerSyncTools(server: McpServer): void {
+  server.registerTool(
+    "planner_sync",
+    {
+      title: "Planner Sync",
+      description:
+        "Sync Apple Notes planner folders into a local JSON cache. " +
+        "Pass the folder names you use for your planner (e.g. the parent folder and " +
+        "individual year folders like \"2025\", \"2026\"). " +
+        "Unchanged notes are skipped automatically.",
+      inputSchema: plannerSyncInputSchema,
+    },
+    async (input) => {
+      const cacheDir = input.cache_dir ?? DEFAULT_CACHE_DIR;
+      const folders = input.folder_names.map((name) => ({ name }));
+      const result = await runPlannerSync({ cacheDir, folders });
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+      };
+    },
+  );
+
+  server.registerTool(
+    "planner_list_entries",
+    {
+      title: "Planner List Entries",
+      description:
+        "List cached planner entries, optionally filtered by year. " +
+        "Returns every entry's title, year, bodyPreview, checklists, and attachment paths.",
+      inputSchema: plannerListEntriesInputSchema,
+    },
+    (input) => {
+      const cacheDir = input.cache_dir ?? DEFAULT_CACHE_DIR;
+      let entries = loadEntriesList(cacheDir);
+      if (input.year !== undefined) {
+        entries = entries.filter((e) => e.year === input.year);
+      }
+      return {
+        content: [{ type: "text", text: JSON.stringify(entries, null, 2) }],
+      };
+    },
+  );
+
+  server.registerTool(
+    "planner_get_entry",
+    {
+      title: "Planner Get Entry",
+      description:
+        "Retrieve a single cached planner entry by its Apple Notes note ID " +
+        "(x-coredata:// URI). Returns the full entry including all checklists and habits.",
+      inputSchema: plannerGetEntryInputSchema,
+    },
+    (input) => {
+      const cacheDir = input.cache_dir ?? DEFAULT_CACHE_DIR;
+      const entries = loadEntriesList(cacheDir);
+      const entry = entries.find((e) => e.noteId === input.note_id);
+      if (!entry) {
+        return {
+          content: [{ type: "text", text: JSON.stringify({ ok: false, error: "Entry not found" }) }],
+          isError: true,
+        };
+      }
+      return {
+        content: [{ type: "text", text: JSON.stringify(entry, null, 2) }],
+      };
+    },
+  );
+
+  server.registerTool(
+    "planner_status",
+    {
+      title: "Planner Status",
+      description:
+        "Return the status of the most recent planner sync: last sync time, " +
+        "entry count, error count, and any error messages.",
+      inputSchema: plannerStatusInputSchema,
+    },
+    (input) => {
+      const cacheDir = input.cache_dir ?? DEFAULT_CACHE_DIR;
+      const status = loadStatus(cacheDir);
+      return {
+        content: [{ type: "text", text: JSON.stringify(status, null, 2) }],
+      };
+    },
+  );
 }
