@@ -6,7 +6,10 @@ import type {
   NotesDiagnostics,
   NotesError,
   NotesResult,
-  ReadFolderInput
+  ReadFolderInput,
+  SearchNotesInput,
+  CreateNoteInput,
+  AppendNoteInput
 } from "@mcp-apple-notes/notes-adapter";
 
 export type CliCommand =
@@ -90,25 +93,9 @@ export type CliIO = {
 
 export type AdapterLike = {
   diagnostics(): Promise<NotesResult<NotesDiagnostics>>;
-  searchNotes(input?: {
-    query?: string;
-    folder?: string;
-    account?: string;
-    limit?: number;
-  }): Promise<NotesResult<NoteSummary[]>>;
+  searchNotes(input?: SearchNotesInput): Promise<NotesResult<NoteSummary[]>>;
   readNote(input: { id: string }): Promise<NotesResult<NoteContent>>;
   readFolder(input: ReadFolderInput): Promise<NotesResult<NoteContent[]>>;
-  createNote(input: {
-    title: string;
-    body: string;
-    folder?: string;
-    account?: string;
-    dryRun?: boolean;
-  }): Promise<NotesResult<CreateNoteResult>>;
-  appendToNote(input: {
-    id: string;
-    content: string;
-    separator?: string;
-    dryRun?: boolean;
-  }): Promise<NotesResult<AppendNoteResult>>;
+  createNote(input: CreateNoteInput): Promise<NotesResult<CreateNoteResult>>;
+  appendToNote(input: AppendNoteInput): Promise<NotesResult<AppendNoteResult>>;
 };

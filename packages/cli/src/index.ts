@@ -1,18 +1,15 @@
 #!/usr/bin/env node
 
-import { createAppleNotesAdapter, notesAdapterPackage } from "@mcp-apple-notes/notes-adapter";
+import { createAppleNotesAdapter } from "@mcp-apple-notes/notes-adapter";
 import { parseCliArgs } from "./args.js";
 import { executeCommand } from "./commands/execute.js";
 import { formatJson } from "./output/json.js";
 import { formatText } from "./output/text.js";
+import { fileURLToPath } from "node:url";
 import type { CliIO } from "./types.js";
 
 export const cliPackage = {
   name: "@mcp-apple-notes/cli",
-  phase: "cli-mvp",
-  dependencies: [
-    notesAdapterPackage.name
-  ]
 } as const;
 
 export async function main(argv: string[], io: CliIO = defaultIo): Promise<number> {
@@ -51,7 +48,7 @@ const defaultIo: CliIO = {
   stderr: process.stderr
 };
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (fileURLToPath(import.meta.url) === process.argv[1]) {
   main(process.argv.slice(2)).then((exitCode) => {
     process.exitCode = exitCode;
   });

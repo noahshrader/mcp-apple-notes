@@ -1,7 +1,7 @@
 {
   "name": "@mcp-apple-notes/notes-adapter",
-  "version": "0.1.0",
-  "private": false,
+  "version": "1.0.0",
+  "private": true,
   "description": "Reusable Apple Notes adapter boundary.",
   "license": "MIT",
   "author": "Noah Shrader <noahshrader@gmail.com> (https://github.com/noahshrader)",
@@ -33,6 +33,6 @@
     "clean": "tsc -b --clean"
   },
   "devDependencies": {
-    "@types/node": "^25.7.0"
+    "@types/node": "^24.10.0"
   }
 }

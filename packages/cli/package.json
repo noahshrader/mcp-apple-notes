@@ -1,7 +1,7 @@
 {
   "name": "@mcp-apple-notes/cli",
-  "version": "0.1.0",
-  "private": false,
+  "version": "1.0.0",
+  "private": true,
   "description": "Local command-line boundary for Apple Notes workflows.",
   "license": "MIT",
   "author": "Noah Shrader <noahshrader@gmail.com> (https://github.com/noahshrader)",
@@ -35,6 +35,6 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@mcp-apple-notes/notes-adapter": "0.1.0"
+    "@mcp-apple-notes/notes-adapter": "1.0.0"
   }
 }

@@ -26,7 +26,6 @@ export {
 
 export const notesAdapterPackage = {
   name: "@mcp-apple-notes/notes-adapter",
-  phase: "adapter-mvp"
 } as const;
 export {
   AppleNotesAdapterError,

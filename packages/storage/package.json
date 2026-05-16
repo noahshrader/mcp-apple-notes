@@ -1,6 +1,6 @@
 {
   "name": "@mcp-apple-notes/storage",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Deferred v1 placeholder for future local metadata, run history, and cache concerns.",
   "license": "MIT",

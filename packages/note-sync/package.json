@@ -1,7 +1,7 @@
 {
   "name": "@mcp-apple-notes/note-sync",
-  "version": "0.1.0",
-  "private": false,
+  "version": "1.0.0",
+  "private": true,
   "description": "Sync Apple Notes folders into a local JSON cache with checklist extraction — no Electron or MCP dependencies.",
   "license": "MIT",
   "author": "Noah Shrader <noahshrader@gmail.com> (https://github.com/noahshrader)",
@@ -32,9 +32,9 @@
     "clean": "tsc -b --clean"
   },
   "dependencies": {
-    "@mcp-apple-notes/notes-adapter": "0.1.0"
+    "@mcp-apple-notes/notes-adapter": "1.0.0"
   },
   "devDependencies": {
-    "@types/node": "^25.7.0"
+    "@types/node": "^24.10.0"
   }
 }

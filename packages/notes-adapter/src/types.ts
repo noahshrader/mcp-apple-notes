@@ -120,19 +120,19 @@ export type RawNoteRecord = {
 };
 
 export type SearchNotesInput = {
-  query?: string;
-  folder?: string;
-  account?: string;
-  limit?: number;
+  query?: string | undefined;
+  folder?: string | undefined;
+  account?: string | undefined;
+  limit?: number | undefined;
 };
 
 export type SearchTagsInput = {
-  query?: string;
-  folder?: string;
-  account?: string;
-  limit?: number;
-  maxNotes?: number;
-  timeBudgetMs?: number;
+  query?: string | undefined;
+  folder?: string | undefined;
+  account?: string | undefined;
+  limit?: number | undefined;
+  maxNotes?: number | undefined;
+  timeBudgetMs?: number | undefined;
 };
 
 export type ReadNoteInput = {
@@ -141,29 +141,29 @@ export type ReadNoteInput = {
 
 export type ReadFolderInput = {
   folder: string;
-  account?: string;
+  account?: string | undefined;
 };
 
 export type CreateNoteInput = {
   title: string;
   body: string;
-  folder?: string;
-  account?: string;
-  dryRun?: boolean;
+  folder?: string | undefined;
+  account?: string | undefined;
+  dryRun?: boolean | undefined;
 };
 
 export type AppendNoteInput = {
   id: string;
   content: string;
-  separator?: string;
-  dryRun?: boolean;
+  separator?: string | undefined;
+  dryRun?: boolean | undefined;
 };
 
 export type ReplaceNoteInput = {
   id: string;
   body: string;
-  title?: string;
-  dryRun?: boolean;
+  title?: string | undefined;
+  dryRun?: boolean | undefined;
 };
 
 export type MutationPreview = {
